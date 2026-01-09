@@ -1,6 +1,77 @@
 # cabrera-estrada-gamarra-tep-sistema-ferias-gastron-micas
 Proyecto Final - Tópicos Especiales de Programación
 
+## Arquitectura de Carpetas api-gateway
+
+api-gateway/
+├── src/
+│   ├── auth/                       # Lógica para interceptar y validar JWT
+│   │   ├── auth.controller.ts      # Endpoints de login/registro (redirigen al micro de usuarios)
+│   │   ├── auth.module.ts          # Registro de clientes proxy (TCP)
+│   │   ├── auth.service.ts         # Lógica de comunicación con Microservicio de Usuarios
+│   │   ├── jwt-auth.guard.ts       # Guard para proteger rutas globales
+│   │   ├── jwt.strategy.ts         # Estrategia de Passport para leer el token
+│   │   ├── roles.decorator.ts      # Decorador para marcar roles (@Roles('admin'))
+│   │   └── roles.guard.ts          # Guard para verificar si el rol del JWT tiene permiso
+│   ├── common/                     # Recursos compartidos
+│   │   ├── rpc-exception.filter.ts # Captura errores de los microservicios y los devuelve como HTTP
+│   │   └── dto/                    # Data Transfer Objects (validación de entrada)
+│   ├── orders/                     # Proxy hacia el Microservicio de Pedidos
+│   │   ├── orders.controller.ts    # Endpoints para pedidos. Valida el rol de 'cliente' antes de enviar al micro.
+│   │   └── orders.module.ts        # Configura el Cliente Proxy TCP para pedidos
+│   ├── products/                   # Proxy hacia el Microservicio de Productos
+│   │   ├── products.controller.ts  # Endpoints para el catálogo. Filtra búsquedas y gestiona CRUD de productos.
+│   │   └── products.module.ts      # Configura el cliente TCP para conectar con el Micro de Productos.
+│   ├── stalls/                     # Proxy hacia el Microservicio de Puestos
+│   │   ├── stalls.controller.ts    # Endpoints para puestos. Controla aprobación (organizador) y creación (emprendedor).
+│   │   └── stalls.module.ts        # Configura el cliente TCP para conectar con el Micro de Puestos.
+│   ├── app.module.ts               # Módulo raíz que orquesta todos los proxies
+│   └── main.ts                     # Configuración de entrada (Puerto, Prefijo global, Validaciones)
+
+## Requisitos Previos
+
+1. Node.js 
+2. PostgreSQL 
+3. NestJS CLI (npm i -g @nestjs/cli)
+
+## Instalación y Configuración
+
+1. Instalación de Dependencias
+Abre la terminal del microservicio y ejecuta los siguientes comandos:
+
+
+npm install @nestjs/microservices                               # Comunicación con Microservicios
+npm install @nestjs/jwt @nestjs/passport passport passport-jwt  # Seguridad, Autenticación (JWT) y Autorización (Roles)
+npm install -D @types/passport-jwt @types/passport-local        # Tipos para TypeScript (Desarrollo)
+npm install class-validator class-transformer                   # Validación de los datos que envía el cliente (Postman)
+npm install nest-winston winston                                # Registro de acciones (Logging) requerido en el punto 8 del proyecto
+
+2. Variables de Entorno
+Crea un archivo .env en la raíz del microservicio con los datos de tu base de datos:
+
+PORT=3000
+NODE_ENV=development
+
+AUTH_HOST=localhost
+AUTH_PORT=3001
+
+ORDERS_HOST=localhost
+ORDERS_PORT=3002
+
+PRODS_HOST=localhost
+PRODS_PORT=3003
+
+STALLS_HOST=localhost
+STALLS_PORT=3004
+
+# Seguridad
+JWT_SECRET=password
+
+## Ejecución
+npm run start:dev
+
+## ===================================================================
+
 ## Arquitectura de Carpetas auth-service
 
 src/
@@ -45,16 +116,17 @@ npm install @nestjs/microservices class-validator class-transformer     # Micros
 2. Variables de Entorno
 Crea un archivo .env en la raíz del microservicio con los datos de tu base de datos:
 
-PORT=3001
-HOST=localhost
+TCP_HOST=localhost
+TCP_PORT=3001
+
 DB_HOST=localhost
-DB_PORT= 5432
-DB_USERNAME=tu_usuario
-DB_PASSWORD=tu_password
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=password
 DB_NAME=auth_service
 
 JWT_SECRET=password
-JWT_EXPIRES_IN=1h
+JWT_EXPIRES_IN=24h
 
 ## Ejecución
 npm run start:dev
@@ -97,13 +169,14 @@ npm install class-validator class-transformer           # Validaciones (DTOs)
 2. Variables de Entorno
 Crea un archivo .env en la raíz del microservicio con los datos de tu base de datos:
 
+TCP_HOST=localhost
+TCP_PORT=3004
+
 DB_HOST=localhost
 DB_PORT=5432
-DB_USER=tu_usuario
-DB_PASSWORD=tu_password
+DB_USERNAME=postgres
+DB_PASSWORD=password
 DB_NAME=stalls_service
-AUTH_SERVICE_HOST=127.0.0.1
-AUTH_SERVICE_PORT=3002
 
 ## Ejecución
 npm run start:dev
@@ -145,12 +218,15 @@ npm install class-validator class-transformer           # Validaciones (DTOs)
 2. Variables de Entorno
 Crea un archivo .env en la raíz del microservicio con los datos de tu base de datos:
 
-PORT=3003
+TCP_HOST=localhost
+TCP_PORT=3003
+
 DB_HOST=localhost
 DB_PORT=5432
-DB_USERNAME=tu_usuario
-DB_PASSWORD=tu_password
+DB_USERNAME=postgres
+DB_PASSWORD=password
 DB_NAME=products_service
+
 
 ## Ejecución
 npm run start:dev
@@ -194,12 +270,15 @@ npm install class-validator class-transformer           # Validaciones (DTOs)
 2. Variables de Entorno
 Crea un archivo .env en la raíz del microservicio con los datos de tu base de datos:
 
-PORT=3004
+TCP_HOST=localhost
+TCP_PORT=3002
+
 DB_HOST=localhost
 DB_PORT=5432
-DB_USERNAME=tu_usuario
-DB_PASSWORD=tu_password
+DB_USERNAME=postgres
+DB_PASSWORD=password
 DB_NAME=orders_service
+
 
 ## Ejecución
 npm run start:dev
