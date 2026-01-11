@@ -24,6 +24,12 @@ let AuthService = class AuthService {
     async validateToken(token) {
         return (0, rxjs_1.firstValueFrom)(this.authClient.send({ cmd: 'validate_token' }, { token }));
     }
+    async getProfile(userId) {
+        return (0, rxjs_1.firstValueFrom)(this.authClient.send({ cmd: 'get_profile' }, { id: userId }));
+    }
+    async updateProfile(userId, updateData) {
+        return (0, rxjs_1.firstValueFrom)(this.authClient.send({ cmd: 'update_profile' }, { id: userId, updateData }));
+    }
 };
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([

@@ -10,6 +10,7 @@ exports.AllExceptionsFilter = void 0;
 const common_1 = require("@nestjs/common");
 let AllExceptionsFilter = class AllExceptionsFilter {
     catch(exception, host) {
+        console.error('ERROR CAPTURADO POR EL FILTRO:', exception);
         const ctx = host.switchToHttp();
         const response = ctx.getResponse();
         const request = ctx.getRequest();

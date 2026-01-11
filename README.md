@@ -227,7 +227,6 @@ DB_USERNAME=postgres
 DB_PASSWORD=password
 DB_NAME=products_service
 
-
 ## Ejecución
 npm run start:dev
 
@@ -278,7 +277,6 @@ DB_PORT=5432
 DB_USERNAME=postgres
 DB_PASSWORD=password
 DB_NAME=orders_service
-
 
 ## Ejecución
 npm run start:dev

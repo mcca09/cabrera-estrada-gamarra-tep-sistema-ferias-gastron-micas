@@ -30,4 +30,14 @@ export class AuthController {
     if (!userId) throw new RpcException('ID de usuario no proporcionado');
     return this.authService.getProfile(userId);
   }
+
+  // ACTUALIZACIÓN: Patrón de mensaje para gestionar la actualización del perfil
+  @MessagePattern({ cmd: 'update_profile' })
+  async updateProfile(@Payload() data: any) {
+    try {
+      return await this.authService.updateProfile(data.id, data.updateData);
+    } catch (error) {
+      throw new RpcException(error.message);
+    }
+  }
 }

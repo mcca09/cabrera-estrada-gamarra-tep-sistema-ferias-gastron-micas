@@ -32,20 +32,19 @@ let AuthController = class AuthController {
     }
     getProfile(req) {
         const userId = req.user?.id;
-        return this.authClient.send({ cmd: 'get_profile' }, { id: userId });
+        if (!userId) {
+            throw new common_1.HttpException('Usuario no identificado', common_1.HttpStatus.UNAUTHORIZED);
+        }
+        return this.authClient.send({ cmd: 'get_profile' }, { id: userId }).pipe((0, rxjs_1.catchError)(err => {
+            throw new common_1.HttpException(err.message || 'Error al obtener perfil', common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+        }));
     }
     updateProfile(req, updateData) {
         const userId = req.user?.id;
-        if (!userId) {
-            throw new common_1.HttpException('No se encontró el ID del usuario en el token', common_1.HttpStatus.UNAUTHORIZED);
-        }
-        return this.authClient
-            .send({ cmd: 'update_profile' }, {
-            id: userId,
-            updateData: updateData,
-        })
-            .pipe((0, rxjs_1.catchError)(() => {
-            throw new common_1.HttpException('Error de comunicación con Auth-Service', common_1.HttpStatus.SERVICE_UNAVAILABLE);
+        if (!userId)
+            throw new common_1.HttpException('Token inválido', common_1.HttpStatus.UNAUTHORIZED);
+        return this.authClient.send({ cmd: 'update_profile' }, { id: userId, updateData }).pipe((0, rxjs_1.catchError)(err => {
+            throw new common_1.HttpException(err.message || 'Error en microservicio', common_1.HttpStatus.BAD_REQUEST);
         }));
     }
 };
