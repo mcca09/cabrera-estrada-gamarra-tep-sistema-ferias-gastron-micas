@@ -10,10 +10,20 @@
     "start:all": "concurrently -n \"GATEWAY,AUTH,PRODS,ORDERS,STALLS\" -c \"magenta,blue,green,yellow,cyan\" \"npm run start:gateway\" \"npm run start:auth\" \"npm run start:products\" \"npm run start:orders\" \"npm run start:stalls\""
   },
   "devDependencies": {
+    "@types/passport-jwt": "^4.0.1",
+    "@types/passport-local": "^1.0.38",
     "concurrently": "^9.1.2"
   },
   "dependencies": {
     "@nestjs/config": "^4.0.2",
-    "@nestjs/microservices": "^11.1.11"
+    "@nestjs/jwt": "^11.0.2",
+    "@nestjs/microservices": "^11.1.11",
+    "@nestjs/passport": "^11.0.5",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.3",
+    "nest-winston": "^1.10.2",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
+    "winston": "^3.19.0"
   }
 }

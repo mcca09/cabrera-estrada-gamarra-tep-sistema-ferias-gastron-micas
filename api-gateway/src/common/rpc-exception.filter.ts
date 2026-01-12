@@ -9,12 +9,23 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const request = ctx.getRequest();
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
-    let message = 'Internal server error';
+    // Permitimos que message sea string o array de strings
+    let message: string | string[] = 'Internal server error'; 
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
-      message = exception.message;
+      const errorResponse = exception.getResponse();
+
+      // ESTA ES LA CORRECCIÓN CLAVE:
+      // Verificamos si la respuesta interna tiene un mensaje detallado (array de errores)
+      if (typeof errorResponse === 'object' && errorResponse !== null && (errorResponse as any).message) {
+        message = (errorResponse as any).message;
+      } else {
+        // Si no hay detalles, usamos el mensaje genérico
+        message = exception.message;
+      }
     }
+    // Lógica para errores que no son HTTP estándar (ej. Microservicios)
     else if (exception && typeof exception.status === 'number') {
       status = exception.status;
       message = exception.message || message;
@@ -30,7 +41,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       statusCode: status,
       timestamp: new Date().toISOString(),
       path: request.url,
-      message: message,
+      message: message, // Ahora esto podrá ser un array con los errores específicos
     });
   }
 }

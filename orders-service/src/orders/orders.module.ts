@@ -6,8 +6,15 @@ import { Order } from './order.entity';
 import { OrderItem } from './order-item.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Order, OrderItem])],
+  imports: [
+    // 1. IMPORTANTE: Registramos las Entidades aquí para que el Servicio
+    // pueda usar @InjectRepository(Order) sin romperse.
+    TypeOrmModule.forFeature([Order, OrderItem]), 
+  ],
   controllers: [OrdersController],
-  providers: [OrdersService],
+  providers: [
+    // 2. IMPORTANTE: Aquí registramos el servicio. 
+    OrdersService, 
+  ],
 })
 export class OrdersModule {}

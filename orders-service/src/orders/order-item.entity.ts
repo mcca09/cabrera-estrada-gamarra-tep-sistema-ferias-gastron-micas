@@ -15,6 +15,7 @@ export class OrderItem {
   @Column({ name: 'unit_price', type: 'numeric', precision: 10, scale: 2 })
   price: number;
 
+  // onDelete: 'CASCADE' asegura que si borras la orden, se borren sus items
   @ManyToOne(() => Order, (order) => order.items, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'order_id' })
   order: Order;
