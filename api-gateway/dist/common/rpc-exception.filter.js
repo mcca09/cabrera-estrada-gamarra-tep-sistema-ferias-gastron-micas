@@ -17,7 +17,13 @@ let AllExceptionsFilter = class AllExceptionsFilter {
         let message = 'Internal server error';
         if (exception instanceof common_1.HttpException) {
             status = exception.getStatus();
-            message = exception.message;
+            const errorResponse = exception.getResponse();
+            if (typeof errorResponse === 'object' && errorResponse !== null && errorResponse.message) {
+                message = errorResponse.message;
+            }
+            else {
+                message = exception.message;
+            }
         }
         else if (exception && typeof exception.status === 'number') {
             status = exception.status;
