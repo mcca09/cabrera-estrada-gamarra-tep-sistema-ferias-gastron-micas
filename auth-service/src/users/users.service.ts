@@ -32,14 +32,20 @@ export class UsersService {
       role: userData.role || 'cliente',
       passwordHash: hashedPassword,
     });
-    
+
     return this.userRepository.save(newUser);
   }
 
-  async update(id: string, updateData: any): Promise<User> {
-    await this.userRepository.update(id, updateData);
+  async update(id: string, updateData: any) {
     const user = await this.findById(id);
-    if (!user) throw new NotFoundException('Usuario no encontrado');
-    return user;
+    if (!user) throw new Error('Usuario no encontrado');
+
+    // ACTUALIZACIÓN: Asignamos cualquier campo que venga en el objeto
+    if (updateData.email) user.email = updateData.email;
+    if (updateData.fullName) user.fullName = updateData.fullName;
+    if (updateData.role) user.role = updateData.role;
+    if (updateData.passwordHash) user.passwordHash = updateData.passwordHash;
+
+    return await this.userRepository.save(user);
   }
 }

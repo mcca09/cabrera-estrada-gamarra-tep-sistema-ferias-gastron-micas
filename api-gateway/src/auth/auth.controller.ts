@@ -28,7 +28,6 @@ export class AuthController {
   @Post('login')
   async login(@Body() loginDto: any) {
     // Usamos firstValueFrom para manejar la respuesta como Promesa y capturar errores
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return firstValueFrom(
       this.authClient.send({ cmd: 'login' }, loginDto).pipe(
         catchError(() => {
@@ -44,48 +43,38 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   getProfile(@Req() req: any) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-    const userId = req.user?.id;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    return this.authClient.send({ cmd: 'get_profile' }, { id: userId });
+    const userId = req.user?.id; // Usar optional chaining por seguridad
+
+    if (!userId) {
+      throw new HttpException('Usuario no identificado', HttpStatus.UNAUTHORIZED);
+    }
+
+    return this.authClient.send({ cmd: 'get_profile' }, { id: userId }).pipe(
+      catchError(err => {
+        throw new HttpException(
+          err.message || 'Error al obtener perfil', 
+          HttpStatus.INTERNAL_SERVER_ERROR
+        );
+      }),
+    );
   }
 
+  // ACTUALIZACIÓN: Endpoint para gestionar la actualización del perfil
   @UseGuards(JwtAuthGuard)
   @Patch('profile')
   updateProfile(@Req() req: any, @Body() updateData: any) {
-    /**
-     * SOLUCIÓN AL ECONNRESET:
-     * Extraemos el ID del token. Si req.user.id es null, el microservicio colapsa.
-     */
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
     const userId = req.user?.id;
+    if (!userId) throw new HttpException('Token inválido', HttpStatus.UNAUTHORIZED);
 
-    if (!userId) {
-      throw new HttpException(
-        'No se encontró el ID del usuario en el token',
-        HttpStatus.UNAUTHORIZED,
-      );
-    }
-
-    // Enviamos el objeto estructurado
-    return this.authClient
-      .send(
-        { cmd: 'update_profile' },
-        {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          id: userId,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          updateData: updateData,
-        },
-      )
-      .pipe(
-        catchError(() => {
-          // Esto evita que el Gateway lance el error de socket crudo
-          throw new HttpException(
-            'Error de comunicación con Auth-Service',
-            HttpStatus.SERVICE_UNAVAILABLE,
-          );
-        }),
-      );
+    // ACTUALIZACIÓN: Enviamos el objeto 'updateData' tal cual viene de la petición.
+    // Esto permite que si envías email, password, fullName o role, todos viajen al microservicio.
+    return this.authClient.send(
+      { cmd: 'update_profile' },
+      { id: userId, updateData } // Enviamos el ID y el paquete de datos completo
+    ).pipe(
+      catchError(err => {
+        throw new HttpException(err.message || 'Error en microservicio', HttpStatus.BAD_REQUEST);
+      })
+    );
   }
 }
