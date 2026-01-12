@@ -12,7 +12,7 @@ export class ApiLog {
   method: string;
 
   @Column({ type: 'uuid', nullable: true })
-  user_id: string; // Se llenará cuando el Gateway envíe el ID del usuario
+  user_id: string; 
 
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   timestamp: Date;

@@ -27,4 +27,8 @@ export class StallsService {
   async findOne(id: string) {
     return await this.stallRepository.findOne({ where: { id } });
   }
+
+  async findActive(){
+    return await this.stallRepository.find({ where: [{status: 'activo'}]});
+  }
 }

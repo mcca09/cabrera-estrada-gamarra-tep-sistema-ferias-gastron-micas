@@ -18,6 +18,18 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
           },
         }),
       },
+      {
+        name: 'STALLS_SERVICE', 
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.TCP,
+          options: {
+            host: configService.get('PRODS_HOST') || 'localhost',
+            port: 3004, 
+          },
+        }),
+      },
     ]),
   ],
   controllers: [ProductsController],

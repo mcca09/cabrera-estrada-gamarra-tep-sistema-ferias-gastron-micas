@@ -17,8 +17,14 @@ export class Product {
   @Column({ type: 'text', nullable: true })
   description: string;
 
+  @Column({ type: 'varchar', length: 100 })
+  category: string;
+
   @Column({ type: 'int', default: 0 })
   stock: number;
+
+  @Column({ type: 'boolean', default: true })
+  is_available: boolean;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

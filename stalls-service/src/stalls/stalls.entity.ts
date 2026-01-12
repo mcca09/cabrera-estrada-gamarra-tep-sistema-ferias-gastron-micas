@@ -15,5 +15,8 @@ export class Stall {
   description: string;
 
   @Column({ nullable: true })
-  ownerId: string; // ID del emprendedor
+  ownerId: string; 
+
+  @Column({ default: 'pendiente' })
+  status: string;
 }

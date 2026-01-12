@@ -12,13 +12,28 @@ export class ProductsController {
     return this.productsService.create(createProductDto);
   }
 
-  @MessagePattern({ cmd: 'find_all_products' })
+  @MessagePattern({ cmd: 'get_all_products' })
   findAll() {
     return this.productsService.findAll();
   }
 
-  @MessagePattern({ cmd: 'find_one_product' })
+  @MessagePattern({ cmd: 'get_product_by_id' })
   findOne(@Payload() id: string) {
     return this.productsService.findOne(id);
+  }
+  @MessagePattern({ cmd: 'get_filtered_products' })
+    findAllFiltered(@Payload() filters: any) {
+    return this.productsService.findFiltered(filters);
+  }
+
+  @MessagePattern({ cmd: 'update_product' })
+  update(@Payload() data: { id: string; [key: string]: any }) {
+    const { id, ...updateDto } = data;
+    return this.productsService.update(id, updateDto); 
+  }
+
+  @MessagePattern({ cmd: 'delete_product' })
+  remove(@Payload() id: string) {
+    return this.productsService.remove(id); 
   }
 }
