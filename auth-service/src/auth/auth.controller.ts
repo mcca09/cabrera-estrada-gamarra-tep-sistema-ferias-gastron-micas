@@ -1,15 +1,16 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload, RpcException } from '@nestjs/microservices';
 import { AuthService } from './auth.service';
+import { RegisterUserDto } from './dto/register.dto';
 
 @Controller()
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @MessagePattern({ cmd: 'register' })
-  async register(@Payload() data: any) {
+  @MessagePattern({ cmd: 'register_user' })
+  async register(@Payload() data: RegisterUserDto) {
     try {
-      return await this.authService.register(data);
+      return this.authService.register(data);
     } catch (error) {
       throw new RpcException(error.message);
     }

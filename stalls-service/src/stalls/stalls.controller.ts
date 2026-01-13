@@ -1,5 +1,5 @@
 import { Controller } from '@nestjs/common';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import { MessagePattern, Payload, RpcException } from '@nestjs/microservices';
 import { StallsService } from './stalls.service';
 
 @Controller()
@@ -7,8 +7,15 @@ export class StallsController {
   constructor(private readonly stallsService: StallsService) {}
 
   @MessagePattern({ cmd: 'create_stall' })
-  async create(@Payload() data: any) {
-    return this.stallsService.create(data);
+  async handleCreateStall(@Payload() data: any) {
+    // Ahora recibimos data.user.id y data.user.role
+    const { user, ...stallInfo } = data;
+    
+    if (user.role !== 'emprendedor') {
+      throw new RpcException('Solo emprendedores pueden tener puestos');
+    }
+
+    return this.stallsService.create(stallInfo, user.id);
   }
 
   @MessagePattern({ cmd: 'find_all_stalls' })

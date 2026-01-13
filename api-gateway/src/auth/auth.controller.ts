@@ -11,8 +11,9 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { JwtAuthGuard } from './jwt-auth.guard';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { catchError, firstValueFrom } from 'rxjs';
+import { RegisterDto } from './dto/register.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -20,9 +21,15 @@ export class AuthController {
     @Inject('AUTH_SERVICE') private readonly authClient: ClientProxy,
   ) {}
 
-  @Post('register')
+  /*@Post('register')
   register(@Body() registerDto: any) {
     return this.authClient.send({ cmd: 'register' }, registerDto);
+  }*/
+
+  @Post('register')
+  async register(@Body() registerDto: RegisterDto) {
+    // Aquí NestJS ya validó que los datos cumplan con el DTO
+    return this.authClient.send({ cmd: 'register_user' }, registerDto);
   }
 
   @Post('login')

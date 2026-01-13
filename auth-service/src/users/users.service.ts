@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
+import { Role } from '../common/enums/role.enum';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -29,7 +30,7 @@ export class UsersService {
     const newUser = this.userRepository.create({
       email: userData.email,
       fullName: userData.fullName || userData.name,
-      role: userData.role || 'cliente',
+      role: userData.role ? (userData.role as Role) : Role.CLIENTE,
       passwordHash: hashedPassword,
     });
 

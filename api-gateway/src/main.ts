@@ -14,7 +14,7 @@ async function bootstrap() {
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
-      transform: true,
+      transform: true, // Esto es vital para que reconozca los tipos del DTO
     }),
   );
 

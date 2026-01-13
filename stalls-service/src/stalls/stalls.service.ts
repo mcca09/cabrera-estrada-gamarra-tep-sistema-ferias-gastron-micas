@@ -1,19 +1,39 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Stall } from './stalls.entity';
-import { RpcException } from '@nestjs/microservices';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
+import { firstValueFrom } from 'rxjs';
+import { Role } from '../common/enums/role.enum';
 
 @Injectable()
 export class StallsService {
   constructor(
     @InjectRepository(Stall)
     private readonly stallRepository: Repository<Stall>,
+    
+    @Inject('AUTH_SERVICE')
+        private readonly authClient: ClientProxy,
   ) {}
 
-  async create(data: any) {
+  async create(data: any, ownerId: string) {
+    // 1. COMUNICACIÓN ENTRE MICROSERVICIOS: Validar rol en Auth Service
+    try {
+      const user = await firstValueFrom(
+        this.authClient.send({ cmd: 'get_profile' }, { id: ownerId })
+      );
+
+      if (!user || user.role !== Role.EMPRENDEDOR) {
+        throw new RpcException('El usuario no tiene permisos de emprendedor en el sistema de cuentas');
+      }
+    } catch (error) {
+      throw new RpcException('Error de validación de usuario: ' + error.message);
+    }
+
+    // 2. Lógica de creación original
     const newStall = this.stallRepository.create({
       ...data,
+      ownerId, // Vinculamos al dueño verificado
       status: 'pendiente'
     });
     return await this.stallRepository.save(newStall);
