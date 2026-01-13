@@ -29,17 +29,21 @@ export class ProductsService {
 
   async findFiltered(filters: any): Promise<Product[]> {
   const { category, stall_id, minPrice, maxPrice, activeStalls} = filters;
-  const where: any = { is_available: true }; // Siempre filtramos por disponibles para el público
+  const where: any = { is_available: true }; 
 
   if (category) where.category = category;
-  if (stall_id) where.stall_id = stall_id;
-  if (stall_id) {
-      where.stall_id = stall_id;
-  } else if (activeStalls && activeStalls.length > 0) {
+  if (activeStalls && activeStalls.length > 0) {
+    if (stall_id) {
+      if (activeStalls.includes(stall_id)) {
+        where.stall_id = stall_id;
+      } else {return [];}
+    } else {
       where.stall_id = In(activeStalls);
-  } else if (!stall_id && (!activeStalls || activeStalls.length === 0)) {
-      return [];
+    }
+  } else {
+    return [];
   }
+
   
   if (minPrice && maxPrice) where.price = Between(minPrice, maxPrice);
   else if (minPrice) where.price = MoreThanOrEqual(minPrice);
