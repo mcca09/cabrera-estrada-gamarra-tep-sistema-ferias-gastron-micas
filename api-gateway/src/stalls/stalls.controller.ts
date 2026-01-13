@@ -27,4 +27,9 @@ export class StallsController {
   findAll() {
     return this.stallsClient.send({ cmd: 'get_all_stalls' }, {});
   }
+
+  @Get('public')
+  findAllActive() {
+    return this.stallsClient.send({ cmd: 'get_active_stalls' }, {});
+  }
 }

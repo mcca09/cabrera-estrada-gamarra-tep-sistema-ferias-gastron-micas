@@ -27,5 +27,5 @@ export class CreateProductDto {
 
   @IsBoolean()
   @IsOptional()
-  is_available: boolean;
+  is_available?: boolean;
 }

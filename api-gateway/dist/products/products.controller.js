@@ -23,17 +23,32 @@ const roles_decorator_1 = require("../auth/roles.decorator");
 const stall_ownership_guard_1 = require("./stall-ownership.guard");
 let ProductsController = class ProductsController {
     productsClient;
-    constructor(productsClient) {
+    stallsClient;
+    constructor(productsClient, stallsClient) {
         this.productsClient = productsClient;
+        this.stallsClient = stallsClient;
     }
-    getPublicCatalog(stall_id, minPrice, maxPrice) {
-        return this.productsClient
-            .send({ cmd: 'get_filtered_products' }, { stall_id, minPrice, maxPrice })
-            .pipe((0, operators_1.catchError)(() => (0, rxjs_1.throwError)(() => new common_1.HttpException('No se pudo cargar el catálogo de productos. Servicio temporalmente fuera de línea.', common_1.HttpStatus.SERVICE_UNAVAILABLE))));
+    async getPublicCatalog(stall_id, category, minPrice, maxPrice) {
+        try {
+            const response = await (0, rxjs_1.firstValueFrom)(this.stallsClient.send({ cmd: 'get_active_stalls' }, {}));
+            console.log('Respuesta cruda de Stalls:', response);
+            const activeStalls = response.map((s) => s.id);
+            if (activeStalls.length === 0)
+                return [];
+            const products = await (0, rxjs_1.firstValueFrom)(this.productsClient.send({ cmd: 'get_filtered_products' }, { stall_id, category, minPrice, maxPrice, activeStalls }));
+            return products;
+        }
+        catch (error) {
+            throw new common_1.HttpException('Error al obtener el catálogo de productos. Verifique la conexión con los servicios.', common_1.HttpStatus.SERVICE_UNAVAILABLE);
+        }
     }
     create(createProductDto) {
+        const data = {
+            ...createProductDto,
+            is_available: false
+        };
         return this.productsClient
-            .send({ cmd: 'create_product' }, createProductDto)
+            .send({ cmd: 'create_product' }, data)
             .pipe((0, operators_1.catchError)(() => (0, rxjs_1.throwError)(() => new common_1.HttpException('Hubo un problema al registrar el producto. Por favor, revisa los datos e intenta de nuevo.', common_1.HttpStatus.BAD_REQUEST))));
     }
     findAll() {
@@ -42,7 +57,7 @@ let ProductsController = class ProductsController {
         }));
     }
     findOne(id) {
-        return this.productsClient.send({ cmd: 'get_product_by_id' }, { id }).pipe((0, operators_1.catchError)(() => {
+        return this.productsClient.send({ cmd: 'get_product_by_id' }, id).pipe((0, operators_1.catchError)(() => {
             throw new common_1.HttpException('Producto no encontrado', common_1.HttpStatus.NOT_FOUND);
         }));
     }
@@ -61,11 +76,12 @@ exports.ProductsController = ProductsController;
 __decorate([
     (0, common_1.Get)('public/catalog'),
     __param(0, (0, common_1.Query)('stall_id')),
-    __param(1, (0, common_1.Query)('minPrice', new common_1.DefaultValuePipe(0), common_1.ParseFloatPipe)),
-    __param(2, (0, common_1.Query)('maxPrice', new common_1.DefaultValuePipe(10000), common_1.ParseFloatPipe)),
+    __param(1, (0, common_1.Query)('category')),
+    __param(2, (0, common_1.Query)('minPrice', new common_1.DefaultValuePipe(0), common_1.ParseFloatPipe)),
+    __param(3, (0, common_1.Query)('maxPrice', new common_1.DefaultValuePipe(10000), common_1.ParseFloatPipe)),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Number, Number]),
-    __metadata("design:returntype", rxjs_1.Observable)
+    __metadata("design:paramtypes", [String, String, Number, Number]),
+    __metadata("design:returntype", Promise)
 ], ProductsController.prototype, "getPublicCatalog", null);
 __decorate([
     (0, common_1.Post)(),
@@ -79,7 +95,6 @@ __decorate([
 __decorate([
     (0, common_1.Get)(),
     (0, roles_decorator_1.Roles)('emprendedor'),
-    (0, common_1.UseGuards)(stall_ownership_guard_1.StallOwnershipGuard),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
@@ -87,7 +102,6 @@ __decorate([
 __decorate([
     (0, common_1.Get)(':id'),
     (0, roles_decorator_1.Roles)('emprendedor'),
-    (0, common_1.UseGuards)(stall_ownership_guard_1.StallOwnershipGuard),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -116,6 +130,8 @@ exports.ProductsController = ProductsController = __decorate([
     (0, common_1.Controller)('products'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     __param(0, (0, common_1.Inject)('PRODUCTS_SERVICE')),
-    __metadata("design:paramtypes", [microservices_1.ClientProxy])
+    __param(1, (0, common_1.Inject)('STALLS_SERVICE')),
+    __metadata("design:paramtypes", [microservices_1.ClientProxy,
+        microservices_1.ClientProxy])
 ], ProductsController);
 //# sourceMappingURL=products.controller.js.map

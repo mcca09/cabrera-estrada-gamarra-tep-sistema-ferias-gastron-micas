@@ -4,4 +4,5 @@ export declare class StallsController {
     constructor(stallsClient: ClientProxy);
     create(createStallDto: any, req: any): import("rxjs").Observable<any>;
     findAll(): import("rxjs").Observable<any>;
+    findAllActive(): import("rxjs").Observable<any>;
 }

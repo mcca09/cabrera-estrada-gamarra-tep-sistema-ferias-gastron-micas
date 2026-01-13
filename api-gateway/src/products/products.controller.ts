@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { catchError, map } from 'rxjs/operators';
-import { Observable, throwError } from 'rxjs';
+import { firstValueFrom, Observable, throwError } from 'rxjs';
 
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -18,36 +18,56 @@ import { StallOwnershipGuard } from './stall-ownership.guard';
 export class ProductsController {
   constructor(
     @Inject('PRODUCTS_SERVICE') private readonly productsClient: ClientProxy,
+    @Inject('STALLS_SERVICE') private readonly stallsClient: ClientProxy,
   ) {}
 
-  // --- RUTAS PÚBLICAS ---
+  // RUTAS PÚBLICAS 
 
   @Get('public/catalog')
-  getPublicCatalog(
+  async getPublicCatalog(
     @Query('stall_id') stall_id?: string,
+    @Query('category') category?: string,
     @Query('minPrice', new DefaultValuePipe(0), ParseFloatPipe) minPrice?: number,
     @Query('maxPrice', new DefaultValuePipe(10000), ParseFloatPipe) maxPrice?: number,
-  ): Observable<any> {
-    return this.productsClient
-      .send({ cmd: 'get_filtered_products' }, { stall_id, minPrice, maxPrice })
-      .pipe(
-        catchError(() => 
-          throwError(() => new HttpException(
-            'No se pudo cargar el catálogo de productos. Servicio temporalmente fuera de línea.',
-            HttpStatus.SERVICE_UNAVAILABLE
-          ))
-        )
+  ){
+    try {
+      const response = await firstValueFrom(
+        this.stallsClient.send({ cmd: 'get_active_stalls' }, {})
       );
-  }
 
-  // --- RUTAS PRIVADAS (EMPRENDEDOR) ---
+    //Extrae solo los IDs
+    console.log('Respuesta cruda de Stalls:', response);
+    const activeStalls = response.map((s: any) => s.id);
+
+    if (activeStalls.length === 0) return [];
+    const products = await firstValueFrom(this.productsClient.send({ cmd: 'get_filtered_products' }, 
+        { stall_id, category, minPrice, maxPrice, activeStalls}
+      )
+    );
+
+    return products;
+
+  } catch (error) {
+    // Manejo de errores centralizado
+    throw new HttpException(
+      'Error al obtener el catálogo de productos. Verifique la conexión con los servicios.',
+      HttpStatus.SERVICE_UNAVAILABLE
+    );
+  }
+}
+
+  //RUTAS PRIVADAS (EMPRENDEDOR) 
 
   @Post()
   @Roles('emprendedor')
   @UseGuards(StallOwnershipGuard)
   create(@Body() createProductDto: any): Observable<any> {
+     const data = {
+      ...createProductDto,
+      is_available: false
+    };
     return this.productsClient
-      .send({ cmd: 'create_product' }, createProductDto)
+      .send({ cmd: 'create_product' }, data)
       .pipe(
         catchError(() => 
           throwError(() => new HttpException(
@@ -60,7 +80,6 @@ export class ProductsController {
 
   @Get()
   @Roles('emprendedor')
-  @UseGuards(StallOwnershipGuard)
   findAll() {
     return this.productsClient.send({ cmd: 'get_all_products' }, {}).pipe(
       catchError(() => {
@@ -74,9 +93,8 @@ export class ProductsController {
 
   @Get(':id')
   @Roles('emprendedor')
-  @UseGuards(StallOwnershipGuard)
   findOne(@Param('id') id: string) {
-    return this.productsClient.send({ cmd: 'get_product_by_id' }, { id }).pipe(
+    return this.productsClient.send({ cmd: 'get_product_by_id' }, id).pipe(
       catchError(() => {
         throw new HttpException('Producto no encontrado', HttpStatus.NOT_FOUND);
       }),

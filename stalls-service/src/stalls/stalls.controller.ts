@@ -44,6 +44,21 @@ export class StallsController {
     return { valid: true };
   }
 
+  @MessagePattern({ cmd: 'verify_stall_status' })
+   async validateStatus(@Payload() data: any): Promise<boolean > {
+    const stall_id = data;
+
+    const stall = await this.stallsService.findOne(stall_id);
+    if (!stall) {
+        return false;
+    }
+    const isStallActive = stall.status === 'activo' || stall.status === 'aprobado';
+    if (!isStallActive) {
+      return false;
+    }
+    return true ;
+  }
+
   @MessagePattern({ cmd: 'get_active_stalls' })
    async findActive() {
     return this.stallsService.findActive(); 

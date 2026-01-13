@@ -35,6 +35,9 @@ let StallsController = class StallsController {
     findAll() {
         return this.stallsClient.send({ cmd: 'get_all_stalls' }, {});
     }
+    findAllActive() {
+        return this.stallsClient.send({ cmd: 'get_active_stalls' }, {});
+    }
 };
 exports.StallsController = StallsController;
 __decorate([
@@ -53,6 +56,12 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], StallsController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.Get)('public'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], StallsController.prototype, "findAllActive", null);
 exports.StallsController = StallsController = __decorate([
     (0, common_1.Controller)('stalls'),
     __param(0, (0, common_1.Inject)('STALLS_SERVICE')),
