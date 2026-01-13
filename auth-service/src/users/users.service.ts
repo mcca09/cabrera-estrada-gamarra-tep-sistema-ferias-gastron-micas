@@ -1,52 +1,46 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
-import { Role } from '../common/enums/role.enum';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    private readonly usersRepository: Repository<User>,
   ) {}
 
-  async findById(id: string): Promise<User | null> {
-    return this.userRepository.findOne({ where: { id } });
+  async findAll(): Promise<User[]> {
+    return await this.usersRepository.find();
   }
 
   async findOneByEmail(email: string): Promise<User | null> {
-    return this.userRepository.findOne({ where: { email } });
+    return await this.usersRepository.findOne({ where: { email } });
   }
 
-  async create(userData: any): Promise<User> {
-    const password = userData.password;
-    if (!password) throw new Error('La contraseña es requerida');
-    
+  async findById(id: string): Promise<User | null> {
+    return await this.usersRepository.findOne({ where: { id } });
+  }
+
+  async create(data: any): Promise<User> {
+    const { password, ...userData } = data;
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const passwordHash = await bcrypt.hash(password, salt);
     
-    const newUser = this.userRepository.create({
-      email: userData.email,
-      fullName: userData.fullName || userData.name,
-      role: userData.role ? (userData.role as Role) : Role.CLIENTE,
-      passwordHash: hashedPassword,
+    const userInstance = this.usersRepository.create({ 
+      ...userData, 
+      passwordHash 
     });
 
-    return this.userRepository.save(newUser);
+    const savedUser = await this.usersRepository.save(userInstance);
+    return savedUser as unknown as User;
   }
 
-  async update(id: string, updateData: any) {
-    const user = await this.findById(id);
-    if (!user) throw new Error('Usuario no encontrado');
-
-    // ACTUALIZACIÓN: Asignamos cualquier campo que venga en el objeto
-    if (updateData.email) user.email = updateData.email;
-    if (updateData.fullName) user.fullName = updateData.fullName;
-    if (updateData.role) user.role = updateData.role;
-    if (updateData.passwordHash) user.passwordHash = updateData.passwordHash;
-
-    return await this.userRepository.save(user);
+  async update(id: string, data: any): Promise<User> {
+    await this.usersRepository.update(id, data);
+    const updated = await this.findById(id);
+    if (!updated) throw new Error('Usuario no encontrado tras actualizar');
+    return updated;
   }
 }

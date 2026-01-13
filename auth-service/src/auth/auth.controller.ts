@@ -1,18 +1,17 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload, RpcException } from '@nestjs/microservices';
 import { AuthService } from './auth.service';
-import { RegisterUserDto } from './dto/register.dto';
 
 @Controller()
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @MessagePattern({ cmd: 'register_user' })
-  async register(@Payload() data: RegisterUserDto) {
+  async register(@Payload() data: any) {
     try {
-      return this.authService.register(data);
+      return await this.authService.register(data);
     } catch (error) {
-      throw new RpcException(error.message);
+      throw new RpcException({ message: error.message, status: error.status || 400 });
     }
   }
 
@@ -21,24 +20,36 @@ export class AuthController {
     try {
       return await this.authService.login(data);
     } catch (error) {
-      throw new RpcException(error.message);
+      throw new RpcException({ message: error.message, status: error.status || 401 });
+    }
+  }
+
+  @MessagePattern({ cmd: 'find_all_users' })
+  async findAll() {
+    try {
+      return await this.authService.findAllUsers();
+    } catch (error) {
+      throw new RpcException({ message: error.message, status: 500 });
     }
   }
 
   @MessagePattern({ cmd: 'get_profile' })
   async getProfile(@Payload() data: any) {
-    const userId = data?.id || data?.userId;
-    if (!userId) throw new RpcException('ID de usuario no proporcionado');
-    return this.authService.getProfile(userId);
+    try {
+      const userId = data?.id || data?.userId;
+      if (!userId) throw new Error('ID de usuario no proporcionado');
+      return await this.authService.getProfile(userId);
+    } catch (error) {
+      throw new RpcException({ message: error.message, status: 404 });
+    }
   }
 
-  // ACTUALIZACIÓN: Patrón de mensaje para gestionar la actualización del perfil
   @MessagePattern({ cmd: 'update_profile' })
   async updateProfile(@Payload() data: any) {
     try {
       return await this.authService.updateProfile(data.id, data.updateData);
     } catch (error) {
-      throw new RpcException(error.message);
+      throw new RpcException({ message: error.message, status: error.status || 400 });
     }
   }
 }

@@ -1,85 +1,71 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Stall } from './stalls.entity';
-import { ClientProxy, RpcException } from '@nestjs/microservices';
-import { firstValueFrom } from 'rxjs';
-import { Role } from '../common/enums/role.enum';
+import { RpcException } from '@nestjs/microservices';
 
 @Injectable()
 export class StallsService {
   constructor(
     @InjectRepository(Stall)
-    private readonly stallRepository: Repository<Stall>,
-    
-    @Inject('AUTH_SERVICE')
-        private readonly authClient: ClientProxy,
+    private stallsRepository: Repository<Stall>,
   ) {}
 
-  async create(data: any, ownerId: string) {
-    // 1. COMUNICACIÓN ENTRE MICROSERVICIOS: Validar rol en Auth Service
-    try {
-      const user = await firstValueFrom(
-        this.authClient.send({ cmd: 'get_profile' }, { id: ownerId })
-      );
-
-      if (!user || user.role !== Role.EMPRENDEDOR) {
-        throw new RpcException('El usuario no tiene permisos de emprendedor en el sistema de cuentas');
-      }
-    } catch (error) {
-      throw new RpcException('Error de validación de usuario: ' + error.message);
-    }
-
-    // 2. Lógica de creación original
-    const newStall = this.stallRepository.create({
-      ...data,
-      ownerId, // Vinculamos al dueño verificado
-      status: 'pendiente'
+  async create(data: any, ownerId: string): Promise<Stall> {
+    const stall = this.stallsRepository.create({
+      name: data.name,
+      description: data.description,
+      ownerId: ownerId,
+      status: 'pendiente',
     });
-    return await this.stallRepository.save(newStall);
+    return await this.stallsRepository.save(stall);
   }
 
-  async findAll() {
-    return await this.stallRepository.find();
+  async findAll(): Promise<Stall[]> {
+    return await this.stallsRepository.find();
   }
 
-  async findOne(id: string) {
-    const stall = await this.stallRepository.findOne({ where: { id } });
+  async findOne(id: string): Promise<Stall> {
+    const stall = await this.stallsRepository.findOne({ where: { id } });
     if (!stall) {
-      throw new RpcException({ status: 404, message: 'Puesto no encontrado' });
+      throw new RpcException({ message: 'Puesto no encontrado', status: 404 });
     }
     return stall;
   }
 
-  async approve(id: string) {
+  async update(id: string, updateData: any, ownerId: string): Promise<Stall> {
+    const stall = await this.findOne(id);
+    if (stall.ownerId !== ownerId) {
+      throw new RpcException({ message: 'No eres el dueño de este puesto', status: 401 });
+    }
+    Object.assign(stall, updateData);
+    return await this.stallsRepository.save(stall);
+  }
+
+  async remove(id: string, ownerId: string): Promise<{ message: string }> {
+    const stall = await this.findOne(id);
+    if (stall.ownerId !== ownerId) {
+      throw new RpcException({ message: 'No tienes permiso para eliminar este puesto', status: 401 });
+    }
+    await this.stallsRepository.remove(stall);
+    return { message: 'Puesto eliminado con éxito' };
+  }
+
+  async approve(id: string): Promise<Stall> {
     const stall = await this.findOne(id);
     stall.status = 'aprobado';
-    return await this.stallRepository.save(stall);
+    return await this.stallsRepository.save(stall);
   }
 
-  async setStatus(id: string, ownerId: string, status: 'activo' | 'inactivo') {
+  async activate(id: string, ownerId: string): Promise<Stall> {
     const stall = await this.findOne(id);
-
     if (stall.ownerId !== ownerId) {
-      throw new RpcException({ status: 401, message: 'No autorizado: No eres el owner de este puesto' });
+      throw new RpcException({ message: 'Solo el dueño puede activar el puesto', status: 401 });
     }
-
-    if (status === 'activo' && stall.status === 'pendiente') {
-      throw new RpcException({ status: 400, message: 'El puesto debe ser aprobado antes de activarse' });
+    if (stall.status !== 'aprobado') {
+      throw new RpcException({ message: 'El puesto debe estar aprobado por un organizador', status: 400 });
     }
-
-    stall.status = status;
-    return await this.stallRepository.save(stall);
-  }
-
-  async update(id: string, ownerId: string, updateData: any) {
-    const stall = await this.findOne(id);
-
-    if (stall.ownerId !== ownerId) {
-      throw new RpcException({ status: 401, message: 'No autorizado: No eres el owner de este puesto' });
-    }
-
-    Object.assign(stall, updateData);
-    return await this.stallRepository.save(stall);
+    stall.status = 'activo';
+    return await this.stallsRepository.save(stall);
   }
 }

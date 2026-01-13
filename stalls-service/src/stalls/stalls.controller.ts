@@ -1,5 +1,5 @@
 import { Controller } from '@nestjs/common';
-import { MessagePattern, Payload, RpcException } from '@nestjs/microservices';
+import { MessagePattern, Payload } from '@nestjs/microservices';
 import { StallsService } from './stalls.service';
 
 @Controller()
@@ -7,39 +7,37 @@ export class StallsController {
   constructor(private readonly stallsService: StallsService) {}
 
   @MessagePattern({ cmd: 'create_stall' })
-  async handleCreateStall(@Payload() data: any) {
-    // Ahora recibimos data.user.id y data.user.role
-    const { user, ...stallInfo } = data;
-    
-    if (user.role !== 'emprendedor') {
-      throw new RpcException('Solo emprendedores pueden tener puestos');
-    }
-
-    return this.stallsService.create(stallInfo, user.id);
+  async create(@Payload() payload: any) {
+    return await this.stallsService.create(payload, payload.ownerId);
   }
 
   @MessagePattern({ cmd: 'find_all_stalls' })
   async findAll() {
-    return this.stallsService.findAll();
+    return await this.stallsService.findAll();
   }
 
-  @MessagePattern({ cmd: 'approve_stall' })
-  async approve(@Payload() data: any) {
-    return this.stallsService.approve(data.id);
-  }
-
-  @MessagePattern({ cmd: 'activate_stall' })
-  async activate(@Payload() data: any) {
-    return this.stallsService.setStatus(data.id, data.ownerId, 'activo');
-  }
-
-  @MessagePattern({ cmd: 'inactivate_stall' })
-  async inactivate(@Payload() data: any) {
-    return this.stallsService.setStatus(data.id, data.ownerId, 'inactivo');
+  @MessagePattern({ cmd: 'find_one_stall' })
+  async findOne(@Payload() payload: { id: string }) {
+    return await this.stallsService.findOne(payload.id);
   }
 
   @MessagePattern({ cmd: 'update_stall' })
-  async update(@Payload() data: any) {
-    return this.stallsService.update(data.id, data.ownerId, data.updateData);
+  async update(@Payload() payload: { id: string; updateData: any; ownerId: string }) {
+    return await this.stallsService.update(payload.id, payload.updateData, payload.ownerId);
+  }
+
+  @MessagePattern({ cmd: 'delete_stall' })
+  async remove(@Payload() payload: { id: string; ownerId: string }) {
+    return await this.stallsService.remove(payload.id, payload.ownerId);
+  }
+
+  @MessagePattern({ cmd: 'approve_stall' })
+  async approve(@Payload() payload: { id: string }) {
+    return await this.stallsService.approve(payload.id);
+  }
+
+  @MessagePattern({ cmd: 'activate_stall' })
+  async activate(@Payload() payload: { id: string; ownerId: string }) {
+    return await this.stallsService.activate(payload.id, payload.ownerId);
   }
 }
