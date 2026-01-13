@@ -58,15 +58,9 @@ async update(id: string, updateProductDto: UpdateProductDto): Promise<Product | 
 
   if (updateProductDto.stock !== undefined) {
     updateProductDto.is_available = updateProductDto.stock > 0;
+  } else if (updateProductDto.is_available !== undefined) {
+    updateProductDto.is_available =  product.stock > 0 ;
   }
-
-  if( updateProductDto.is_available !== undefined && updateProductDto.stock !== undefined) {
-    if(updateProductDto.stock <=0 ){
-      updateProductDto.is_available = false;
-    } else{
-      updateProductDto.is_available = true;
-    }  
-  }    
 
   const updatedProduct = this.productRepository.merge(product, updateProductDto);
   return await this.productRepository.save(updatedProduct);
