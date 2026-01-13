@@ -35,4 +35,9 @@ export class StallsController {
   async update(@Payload() data: any) {
     return this.stallsService.update(data.id, data.ownerId, data.updateData);
   }
+
+  @MessagePattern({ cmd: 'delete_stall' })
+  async remove(@Payload() data: any) {
+    return this.stallsService.remove(data.id, data.ownerId);
+  }
 }

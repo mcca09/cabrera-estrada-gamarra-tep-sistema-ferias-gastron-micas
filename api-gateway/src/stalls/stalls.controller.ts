@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Inject, Param, Patch, Put, UseFilters } from '@nestjs/common';
+import { Controller, Post, Body, Get, Inject, Param, Patch, Delete, UseFilters } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { catchError, throwError } from 'rxjs';
 import { AllExceptionsFilter } from '../common/rpc-exception.filter';
@@ -38,10 +38,16 @@ export class StallsController {
       .pipe(catchError(err => throwError(() => err)));
   }
 
-  @Put(':id')
+  @Patch(':id')
   update(@Param('id') id: string, @Body() body: any) {
     const { ownerId, updateData } = body;
     return this.stallsClient.send({ cmd: 'update_stall' }, { id, ownerId, updateData })
+      .pipe(catchError(err => throwError(() => err)));
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string, @Body('ownerId') ownerId: string) {
+    return this.stallsClient.send({ cmd: 'delete_stall' }, { id, ownerId })
       .pipe(catchError(err => throwError(() => err)));
   }
 }

@@ -62,4 +62,15 @@ export class StallsService {
     Object.assign(stall, updateData);
     return await this.stallRepository.save(stall);
   }
+
+  async remove(id: string, ownerId: string) {
+    const stall = await this.findOne(id);
+
+    if (stall.ownerId !== ownerId) {
+      throw new RpcException({ status: 401, message: 'No autorizado: No puedes eliminar este puesto' });
+    }
+
+    await this.stallRepository.remove(stall);
+    return { message: 'Puesto eliminado con éxito' };
+  }
 }
