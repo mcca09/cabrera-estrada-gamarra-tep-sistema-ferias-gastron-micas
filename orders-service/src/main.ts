@@ -1,34 +1,33 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe, Logger } from '@nestjs/common';
 import { Transport, MicroserviceOptions } from '@nestjs/microservices';
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
-  const logger = new Logger('Orders-Microservice');
+  // 1. Primero cargamos el contexto para leer el ConfigService
+  const appContext = await NestFactory.createApplicationContext(AppModule);
+  const configService = appContext.get(ConfigService);
+
+  // 2. Obtenemos el puerto y host del .env (o usamos valores por defecto)
+  const port = configService.get('TCP_PORT') || 3002;
+  const host = configService.get('TCP_HOST') || 'localhost';
+
+  // 3. Cerramos el contexto temporal
+  await appContext.close();
+
+  // 4. Iniciamos el Microservicio real
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
     AppModule,
     {
       transport: Transport.TCP,
       options: {
-        host: 'localhost',
-        port: 3002,
+        host: '0.0.0.0', // '0.0.0.0' es más seguro para evitar problemas de red local
+        port: Number(port),
       },
     },
   );
 
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }),
-  );
-
   await app.listen();
-  logger.log('Orders-Service (TCP) ready on port 3002');
+  console.log(`🚀 Orders-Service (TCP) listo y escuchando en ${host}:${port}`);
 }
-
-bootstrap().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+bootstrap();
