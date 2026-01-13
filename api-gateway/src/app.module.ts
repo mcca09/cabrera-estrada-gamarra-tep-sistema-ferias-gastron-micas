@@ -4,6 +4,8 @@ import { AuthModule } from './auth/auth.module';
 import { ProductsModule } from './products/products.module';
 import { OrdersModule } from './orders/orders.module';
 import { StallsModule } from './stalls/stalls.module';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 
 @Module({
   imports: [
@@ -16,6 +18,11 @@ import { StallsModule } from './stalls/stalls.module';
     StallsModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [
+    {
+      provide: APP_INTERCEPTOR, // Requisito 8: Registro de acciones
+      useClass: LoggingInterceptor,
+    },
+  ],
 })
 export class AppModule {}

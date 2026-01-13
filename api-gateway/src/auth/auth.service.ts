@@ -20,20 +20,17 @@ export class AuthService {
     );
   }
 
-  // ANEXO: Método opcional para centralizar llamadas de perfil si se prefiere no usar el proxy en el controller
   async getProfile(userId: string) {
     return firstValueFrom(
       this.authClient.send({ cmd: 'get_profile' }, { id: userId }),
     );
   }
 
-  // ACTUALIZACIÓN: Ajustado para enviar los datos bajo la llave 'updateData'
-  // permitiendo que el microservicio reciba email, password, fullName y role.
   async updateProfile(userId: string, updateData: any) {
     return firstValueFrom(
       this.authClient.send(
         { cmd: 'update_profile' }, 
-        { id: userId, updateData } // Cambiado para mantener consistencia con el controller
+        { id: userId, updateData } 
       ),
     );
   }

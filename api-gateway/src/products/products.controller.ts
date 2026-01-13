@@ -9,8 +9,9 @@ import { firstValueFrom, Observable, throwError } from 'rxjs';
 
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
-import { Roles } from '../auth/roles.decorator';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { StallOwnershipGuard } from './stall-ownership.guard';
+import { Role } from 'src/common/enums/role.enum';
 
 
 @Controller('products')
@@ -48,7 +49,6 @@ export class ProductsController {
     return products;
 
   } catch (error) {
-    // Manejo de errores centralizado
     throw new HttpException(
       'Error al obtener el catálogo de productos. Verifique la conexión con los servicios.',
       HttpStatus.SERVICE_UNAVAILABLE
@@ -59,7 +59,7 @@ export class ProductsController {
   //RUTAS PRIVADAS (EMPRENDEDOR) 
 
   @Post()
-  @Roles('emprendedor')
+  @Roles(Role.EMPRENDEDOR)
   @UseGuards(StallOwnershipGuard)
   create(@Body() createProductDto: any): Observable<any> {
      const data = {
@@ -79,7 +79,7 @@ export class ProductsController {
   }
 
   @Get()
-  @Roles('emprendedor')
+  @Roles(Role.EMPRENDEDOR)
   findAll() {
     return this.productsClient.send({ cmd: 'get_all_products' }, {}).pipe(
       catchError(() => {
@@ -92,7 +92,7 @@ export class ProductsController {
   }
 
   @Get(':id')
-  @Roles('emprendedor')
+  @Roles(Role.EMPRENDEDOR)
   findOne(@Param('id') id: string) {
     return this.productsClient.send({ cmd: 'get_product_by_id' }, id).pipe(
       catchError(() => {
@@ -102,7 +102,7 @@ export class ProductsController {
   }
 
   @Patch(':id')
-  @Roles('emprendedor')
+  @Roles(Role.EMPRENDEDOR)
   @UseGuards(StallOwnershipGuard)
   update(
     @Param('id', ParseUUIDPipe) id: string, 
@@ -121,7 +121,7 @@ export class ProductsController {
   }
 
   @Delete(':id')
-  @Roles('emprendedor')
+  @Roles(Role.EMPRENDEDOR)
   @UseGuards(StallOwnershipGuard)
   remove(@Param('id', ParseUUIDPipe) id: string): Observable<any> {
     return this.productsClient
