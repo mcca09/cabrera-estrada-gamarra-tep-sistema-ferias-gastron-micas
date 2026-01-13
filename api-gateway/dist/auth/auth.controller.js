@@ -26,7 +26,8 @@ let AuthController = class AuthController {
         return this.authClient.send({ cmd: 'register' }, registerDto);
     }
     async login(loginDto) {
-        return (0, rxjs_1.firstValueFrom)(this.authClient.send({ cmd: 'login' }, loginDto).pipe((0, rxjs_1.catchError)(() => {
+        return (0, rxjs_1.firstValueFrom)(this.authClient.send({ cmd: 'login' }, loginDto).pipe((0, rxjs_1.catchError)((error) => {
+            console.error('Error detallado de Auth:', error);
             throw new common_1.HttpException('Error en el microservicio de Auth', common_1.HttpStatus.INTERNAL_SERVER_ERROR);
         })));
     }

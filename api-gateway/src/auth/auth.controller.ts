@@ -31,7 +31,8 @@ export class AuthController {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return firstValueFrom(
       this.authClient.send({ cmd: 'login' }, loginDto).pipe(
-        catchError(() => {
+        catchError((error) => {
+          console.error('Error detallado de Auth:', error);
           throw new HttpException(
             'Error en el microservicio de Auth',
             HttpStatus.INTERNAL_SERVER_ERROR,

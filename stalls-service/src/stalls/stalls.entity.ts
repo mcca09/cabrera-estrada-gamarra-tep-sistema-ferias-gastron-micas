@@ -8,9 +8,6 @@ export class Stall {
   @Column()
   name: string;
 
-  @Column()
-  location: string;
-
   @Column({ nullable: true })
   description: string;
 

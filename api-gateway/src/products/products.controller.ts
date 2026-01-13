@@ -1,132 +1,120 @@
 import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  Patch,
-  Delete,
-  UseGuards,
-  Inject,
-  HttpException,
-  HttpStatus,
-  Req,
-  Query,
-  ForbiddenException,
-  NotFoundException,
+  Controller, Get, Post, Body, Param, Patch, Delete, 
+  UseGuards, Inject, Query, ParseUUIDPipe, ParseFloatPipe, 
+  DefaultValuePipe, HttpException, HttpStatus 
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
+import { catchError, map } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
+
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { firstValueFrom } from 'rxjs';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { StallOwnershipGuard } from './stall-ownership.guard';
+
 
 @Controller('products')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class ProductsController {
   constructor(
     @Inject('PRODUCTS_SERVICE') private readonly productsClient: ClientProxy,
-    @Inject('STALLS_SERVICE') private readonly stallsClient: ClientProxy,
   ) {}
 
+  // --- RUTAS PÚBLICAS ---
+
   @Get('public/catalog')
-  async getPublicCatalog(
-    @Query('category') category?: string,
+  getPublicCatalog(
     @Query('stall_id') stall_id?: string,
-    @Query('minPrice') minPrice?: number,
-    @Query('maxPrice') maxPrice?: number,
-  ) {
-    return await firstValueFrom(
-      this.productsClient.send(
-        { cmd: 'get_filtered_products' },
-        { category, stall_id, minPrice, maxPrice },
-      ),
-    );
+    @Query('minPrice', new DefaultValuePipe(0), ParseFloatPipe) minPrice?: number,
+    @Query('maxPrice', new DefaultValuePipe(10000), ParseFloatPipe) maxPrice?: number,
+  ): Observable<any> {
+    return this.productsClient
+      .send({ cmd: 'get_filtered_products' }, { stall_id, minPrice, maxPrice })
+      .pipe(
+        catchError(() => 
+          throwError(() => new HttpException(
+            'No se pudo cargar el catálogo de productos. Servicio temporalmente fuera de línea.',
+            HttpStatus.SERVICE_UNAVAILABLE
+          ))
+        )
+      );
   }
 
-  @Get('public/stalls')
-  async getPublicStalls() {
-    return await firstValueFrom(
-      this.stallsClient.send({ cmd: 'get_active_stalls' }, {}),
-    );
-  }
+  // --- RUTAS PRIVADAS (EMPRENDEDOR) ---
 
-  @UseGuards(JwtAuthGuard)
   @Post()
-  async create(@Body() createProductDto: any, @Req() req: any) {
-    const userId = req.user.id;
-
-    const isOwner = await firstValueFrom(
-      this.stallsClient.send(
-        { cmd: 'verify_stall_ownership' },
-        { userId, stall_id: createProductDto.stall_id },
-      ),
-    );
-
-    if (!isOwner) {
-      throw new ForbiddenException('No tienes permiso sobre este puesto.');
-    }
-
-    return await firstValueFrom(
-      this.productsClient.send({ cmd: 'create_product' }, createProductDto),
-    );
+  @Roles('emprendedor')
+  @UseGuards(StallOwnershipGuard)
+  create(@Body() createProductDto: any): Observable<any> {
+    return this.productsClient
+      .send({ cmd: 'create_product' }, createProductDto)
+      .pipe(
+        catchError(() => 
+          throwError(() => new HttpException(
+            'Hubo un problema al registrar el producto. Por favor, revisa los datos e intenta de nuevo.',
+            HttpStatus.BAD_REQUEST
+          ))
+        )
+      );
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Patch(':id')
-  async update(@Param('id') id: string, @Body() updateProductDto: any, @Req() req: any) {
-    const userId = req.user.id;
-
-    const product = await firstValueFrom(
-      this.productsClient.send({ cmd: 'get_product_by_id' }, id),
-    );
-    if (!product) throw new NotFoundException('Producto no encontrado');
-
-    const isOwner = await firstValueFrom(
-      this.stallsClient.send(
-        { cmd: 'verify_stall_ownership' },
-        { userId, stall_id: product.stall_id },
-      ),
-    );
-
-    if (!isOwner) {
-      throw new ForbiddenException('No tienes permiso para editar este producto.');
-    }
-
-    return await firstValueFrom(
-      this.productsClient.send({ cmd: 'update_product' }, { id, ...updateProductDto }),
-    );
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Delete(':id')
-  async remove(@Param('id') id: string, @Req() req: any) {
-    const userId = req.user.id;
-
-    const product = await firstValueFrom(
-      this.productsClient.send({ cmd: 'get_product_by_id' }, id),
-    );
-    if (!product) throw new NotFoundException('Producto no encontrado');
-
-    const isOwner = await firstValueFrom(
-      this.stallsClient.send(
-        { cmd: 'verify_stall_ownership' },
-        { userId, stall_id: product.stall_id },
-      ),
-    );
-
-    if (!isOwner) {
-      throw new ForbiddenException('No tienes permiso para eliminar este producto.');
-    }
-
-    return await firstValueFrom(
-      this.productsClient.send({ cmd: 'delete_product' }, id),
+  @Get()
+  @Roles('emprendedor')
+  @UseGuards(StallOwnershipGuard)
+  findAll() {
+    return this.productsClient.send({ cmd: 'get_all_products' }, {}).pipe(
+      catchError(() => {
+        throw new HttpException(
+          'Servicio de Productos no disponible',
+          HttpStatus.SERVICE_UNAVAILABLE,
+        );
+      }),
     );
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    const product = await firstValueFrom(
-      this.productsClient.send({ cmd: 'get_product_by_id' }, id),
+  @Roles('emprendedor')
+  @UseGuards(StallOwnershipGuard)
+  findOne(@Param('id') id: string) {
+    return this.productsClient.send({ cmd: 'get_product_by_id' }, { id }).pipe(
+      catchError(() => {
+        throw new HttpException('Producto no encontrado', HttpStatus.NOT_FOUND);
+      }),
     );
-    if (!product) throw new NotFoundException('Producto no encontrado');
-    return product;
+  }
+
+  @Patch(':id')
+  @Roles('emprendedor')
+  @UseGuards(StallOwnershipGuard)
+  update(
+    @Param('id', ParseUUIDPipe) id: string, 
+    @Body() updateProductDto: any
+  ): Observable<any> {
+    return this.productsClient
+      .send({ cmd: 'update_product' }, { id, ...updateProductDto })
+      .pipe(
+        catchError(() => 
+          throwError(() => new HttpException(
+            `No se pudo actualizar el producto con ID: ${id}.`,
+            HttpStatus.INTERNAL_SERVER_ERROR
+          ))
+        )
+      );
+  }
+
+  @Delete(':id')
+  @Roles('emprendedor')
+  @UseGuards(StallOwnershipGuard)
+  remove(@Param('id', ParseUUIDPipe) id: string): Observable<any> {
+    return this.productsClient
+      .send({ cmd: 'delete_product' }, id)
+      .pipe(
+        catchError(() => 
+          throwError(() => new HttpException(
+            'Error al intentar eliminar el producto. Es posible que ya no esté disponible.',
+            HttpStatus.INTERNAL_SERVER_ERROR
+          ))
+        )
+      );
   }
 }

@@ -13,6 +13,7 @@ export class ProductsService {
   ) {}
 
   async create(createProductDto: CreateProductDto): Promise<Product> {
+    if (createProductDto.stock <= 0) { createProductDto.is_available = false;}
     const product = this.productRepository.create(createProductDto);
     return await this.productRepository.save(product);
   }

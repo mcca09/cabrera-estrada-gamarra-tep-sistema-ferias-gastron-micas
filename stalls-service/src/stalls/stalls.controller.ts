@@ -37,10 +37,10 @@ export class StallsController {
         return { valid: false, message: 'No eres el dueño de este puesto.' };
       }
 
-    const isStallActive = stall.status === 'activo' || stall.status === 'aprobado';
+    /*const isStallActive = stall.status === 'activo' || stall.status === 'aprobado';
     if (!isStallActive) {
       return { valid: false, message: 'El puesto debe estar activo o aprobado para gestionar productos.' };
-    }
+    }*/
     return { valid: true };
   }
 

@@ -26,6 +26,6 @@ export class CreateProductDto {
   stock: number;
 
   @IsBoolean()
-  @IsNotEmpty()
+  @IsOptional()
   is_available: boolean;
 }

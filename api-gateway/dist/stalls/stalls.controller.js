@@ -24,14 +24,16 @@ let StallsController = class StallsController {
         this.stallsClient = stallsClient;
     }
     create(createStallDto, req) {
+        const userId = req.user.id;
         const data = {
             ...createStallDto,
-            ownerId: req.user.userId
+            ownerId: userId,
+            status: 'pendiente'
         };
         return this.stallsClient.send({ cmd: 'create_stall' }, data);
     }
     findAll() {
-        return this.stallsClient.send({ cmd: 'find_all_stalls' }, {});
+        return this.stallsClient.send({ cmd: 'get_all_stalls' }, {});
     }
 };
 exports.StallsController = StallsController;

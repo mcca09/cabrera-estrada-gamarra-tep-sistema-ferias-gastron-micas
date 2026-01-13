@@ -12,4 +12,8 @@ export class CreateStallDto {
   @IsString()
   @IsOptional()
   description?: string;
+
+  @IsString()
+  @IsOptional()
+  status?: string;
 }

@@ -23,7 +23,7 @@ export class Product {
   @Column({ type: 'int', default: 0 })
   stock: number;
 
-  @Column({ type: 'boolean', default: true })
+  @Column({ type: 'boolean', default: false })
   is_available: boolean;
 
   @CreateDateColumn({ name: 'created_at' })

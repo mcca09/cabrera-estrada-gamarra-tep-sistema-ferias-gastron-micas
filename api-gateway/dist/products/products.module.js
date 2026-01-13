@@ -30,6 +30,18 @@ exports.ProductsModule = ProductsModule = __decorate([
                         },
                     }),
                 },
+                {
+                    name: 'STALLS_SERVICE',
+                    imports: [config_1.ConfigModule],
+                    inject: [config_1.ConfigService],
+                    useFactory: (configService) => ({
+                        transport: microservices_1.Transport.TCP,
+                        options: {
+                            host: configService.get('PRODS_HOST') || 'localhost',
+                            port: 3004,
+                        },
+                    }),
+                },
             ]),
         ],
         controllers: [products_controller_1.ProductsController],
