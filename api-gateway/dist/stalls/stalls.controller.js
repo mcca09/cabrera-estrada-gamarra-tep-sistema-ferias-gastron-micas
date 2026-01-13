@@ -37,6 +37,9 @@ let StallsController = class StallsController {
     findAll() {
         return this.stallsClient.send({ cmd: 'get_all_stalls' }, {});
     }
+    findOne(id) {
+        return this.stallsClient.send({ cmd: 'find_one_stall' }, id);
+    }
     findAllActive() {
         return this.stallsClient.send({ cmd: 'get_active_stalls' }, {});
     }
@@ -44,20 +47,35 @@ let StallsController = class StallsController {
         return this.stallsClient.send({ cmd: 'approve_stall' }, { id })
             .pipe((0, rxjs_1.catchError)(err => (0, rxjs_1.throwError)(() => err)));
     }
-    activate(id, ownerId) {
+    disapprove(id) {
+        return this.stallsClient.send({ cmd: 'disapprove_stall' }, { id })
+            .pipe((0, rxjs_1.catchError)(err => (0, rxjs_1.throwError)(() => err)));
+    }
+    activate(id, req) {
+        const ownerId = req.user.id;
         return this.stallsClient.send({ cmd: 'activate_stall' }, { id, ownerId })
             .pipe((0, rxjs_1.catchError)(err => (0, rxjs_1.throwError)(() => err)));
     }
-    inactivate(id, ownerId) {
+    inactivate(id, req) {
+        const ownerId = req.user.id;
         return this.stallsClient.send({ cmd: 'inactivate_stall' }, { id, ownerId })
             .pipe((0, rxjs_1.catchError)(err => (0, rxjs_1.throwError)(() => err)));
     }
-    update(id, body) {
-        const { ownerId, updateData } = body;
+    update(id, updateData, req) {
+        const ownerId = req.user.id;
+        if (!ownerId) {
+            throw new common_1.UnauthorizedException('Token inválido o usuario no encontrado');
+        }
         return this.stallsClient.send({ cmd: 'update_stall' }, { id, ownerId, updateData })
             .pipe((0, rxjs_1.catchError)(err => (0, rxjs_1.throwError)(() => err)));
     }
-    remove(id, ownerId) {
+    remove(id, req) {
+        console.log('PARAM ID:', id);
+        console.log('REQ.USER:', req.user);
+        if (!req.user?.id) {
+            throw new common_1.UnauthorizedException('Token inválido o usuario no encontrado');
+        }
+        const ownerId = req.user.id;
         return this.stallsClient.send({ cmd: 'delete_stall' }, { id, ownerId })
             .pipe((0, rxjs_1.catchError)(err => (0, rxjs_1.throwError)(() => err)));
     }
@@ -74,11 +92,22 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], StallsController.prototype, "create", null);
 __decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(role_enum_1.Role.EMPRENDEDOR),
     (0, common_1.Get)(),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], StallsController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(role_enum_1.Role.EMPRENDEDOR),
+    (0, common_1.Get)(':id'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], StallsController.prototype, "findOne", null);
 __decorate([
     (0, common_1.Get)('public'),
     __metadata("design:type", Function),
@@ -87,6 +116,7 @@ __decorate([
 ], StallsController.prototype, "findAllActive", null);
 __decorate([
     (0, common_1.Patch)(':id/approve'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(role_enum_1.Role.ORGANIZADOR),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
@@ -94,39 +124,53 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], StallsController.prototype, "approve", null);
 __decorate([
+    (0, common_1.Patch)(':id/disapprove'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(role_enum_1.Role.ORGANIZADOR),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], StallsController.prototype, "disapprove", null);
+__decorate([
     (0, common_1.Patch)(':id/activate'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(role_enum_1.Role.EMPRENDEDOR),
     __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)('ownerId')),
+    __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], StallsController.prototype, "activate", null);
 __decorate([
     (0, common_1.Patch)(':id/inactivate'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(role_enum_1.Role.EMPRENDEDOR),
     __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)('ownerId')),
+    __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], StallsController.prototype, "inactivate", null);
 __decorate([
     (0, common_1.Patch)(':id'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(role_enum_1.Role.EMPRENDEDOR),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [String, Object, Object]),
     __metadata("design:returntype", void 0)
 ], StallsController.prototype, "update", null);
 __decorate([
     (0, common_1.Delete)(':id'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(role_enum_1.Role.EMPRENDEDOR),
     __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)('ownerId')),
+    __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], StallsController.prototype, "remove", null);
 exports.StallsController = StallsController = __decorate([

@@ -12,6 +12,8 @@ import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { StallOwnershipGuard } from './stall-ownership.guard';
 import { Role } from 'src/common/enums/role.enum';
+import { CreateOrderDto } from 'src/orders/dto/create-order.dto';
+
 
 
 @Controller('products')

@@ -1,46 +1,23 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { StallsService } from './stalls.service';
+import { CreateStallDto } from './create-stall.dto';
+import { UpdateStallPayload } from './update-stall-payload.dto';
 
 @Controller()
 export class StallsController {
   constructor(private readonly stallsService: StallsService) {}
 
   @MessagePattern({ cmd: 'create_stall' })
-  async create(@Payload() data: any) {
-    const { ownerId, ...dto } = data;
-    return this.stallsService.create({ ownerId, ...dto });
-  }
+async create(@Payload() dto: CreateStallDto) {
+  return this.stallsService.create(dto);
+}
+
 
   @MessagePattern({ cmd: 'verify_stall_ownership' })
-  async validateAccess(@Payload() data: { userId: string; stall_id: string }): Promise<{ valid: boolean; message?: string }> {
+  async validateAccess(@Payload() data: { userId: string; stall_id: string }) {
     const { userId, stall_id } = data;
-  
-    const stall = await this.stallsService.findOne(stall_id);
-  
-      if (!stall) {
-        return { valid: false, message: 'El puesto no existe.' };
-      }
-
-      if (stall.ownerId !== userId) {
-        return { valid: false, message: 'No eres el dueño de este puesto.' };
-      }
-    return { valid: true };
-  }
-
-  @MessagePattern({ cmd: 'verify_stall_status' })
-   async validateStatus(@Payload() data: any): Promise<boolean > {
-    const stall_id = data;
-
-    const stall = await this.stallsService.findOne(stall_id);
-    if (!stall) {
-        return false;
-    }
-    const isStallActive = stall.status === 'activo' || stall.status === 'aprobado';
-    if (!isStallActive) {
-      return false;
-    }
-    return true ;
+    return this.stallsService.validateAccess(userId, stall_id);
   }
 
   @MessagePattern({ cmd: 'get_active_stalls' })
@@ -48,7 +25,7 @@ export class StallsController {
     return this.stallsService.findActive(); 
   }
 
-  @MessagePattern({ cmd: 'find_all_stalls' })
+  @MessagePattern({ cmd: 'get_all_stalls' })
   async findAll() {
     return await this.stallsService.findAll();
   }
@@ -58,9 +35,11 @@ export class StallsController {
     return await this.stallsService.findOne(payload.id);
   }
 
+  
   @MessagePattern({ cmd: 'update_stall' })
-  async update(@Payload() payload: { id: string; updateData: any; ownerId: string }) {
-    return await this.stallsService.update(payload.id, payload.updateData, payload.ownerId);
+  async update(@Payload() payload: any) {
+    const { id, ownerId, updateData } = payload;
+    return await this.stallsService.update(id, ownerId, updateData);
   }
 
   @MessagePattern({ cmd: 'delete_stall' })
@@ -73,8 +52,18 @@ export class StallsController {
     return await this.stallsService.approve(payload.id);
   }
 
+  @MessagePattern({ cmd: 'disapprove_stall' })
+  async disapprove(@Payload() payload: { id: string }) {
+    return await this.stallsService.disapprove(payload.id);
+  }
+
   @MessagePattern({ cmd: 'activate_stall' })
   async activate(@Payload() payload: { id: string; ownerId: string }) {
     return await this.stallsService.activate(payload.id, payload.ownerId);
+  }
+
+  @MessagePattern({ cmd: 'inactivate_stall' })
+  async inactivate(@Payload() payload: { id: string; ownerId: string }) {
+    return await this.stallsService.inactivate(payload.id, payload.ownerId);
   }
 }  

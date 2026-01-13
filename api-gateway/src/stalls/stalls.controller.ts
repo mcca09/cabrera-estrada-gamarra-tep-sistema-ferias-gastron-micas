@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Request, Get, Inject, Patch,Delete,Param } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request, Get, Inject, Patch,Delete,Param, UnauthorizedException } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -25,9 +25,18 @@ export class StallsController {
     return this.stallsClient.send({ cmd: 'create_stall' }, data);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.EMPRENDEDOR)
   @Get()
   findAll() {
     return this.stallsClient.send({ cmd: 'get_all_stalls' }, {});
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.EMPRENDEDOR)
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.stallsClient.send({ cmd: 'find_one_stall' }, id);
   }
 
   @Get('public')
@@ -36,37 +45,57 @@ export class StallsController {
   }
   
   @Patch(':id/approve')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ORGANIZADOR)
   approve(@Param('id') id: string) {
     return this.stallsClient.send({ cmd: 'approve_stall' }, { id })
       .pipe(catchError(err => throwError(() => err)));
   }
 
+  @Patch(':id/disapprove')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ORGANIZADOR)
+  disapprove(@Param('id') id: string) {
+    return this.stallsClient.send({ cmd: 'disapprove_stall' }, { id })
+      .pipe(catchError(err => throwError(() => err)));
+  }
+
   @Patch(':id/activate')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.EMPRENDEDOR)
-  activate(@Param('id') id: string, @Body('ownerId') ownerId: string) {
+  activate(@Param('id') id: string, @Request() req: any) {
+    const ownerId = req.user.id;
     return this.stallsClient.send({ cmd: 'activate_stall' }, { id, ownerId })
       .pipe(catchError(err => throwError(() => err)));
   }
 
   @Patch(':id/inactivate')
+  @UseGuards(JwtAuthGuard, RolesGuard)
    @Roles(Role.EMPRENDEDOR)
-  inactivate(@Param('id') id: string, @Body('ownerId') ownerId: string) {
+  inactivate(@Param('id') id: string, @Request() req: any) {
+    const ownerId = req.user.id;
     return this.stallsClient.send({ cmd: 'inactivate_stall' }, { id, ownerId })
       .pipe(catchError(err => throwError(() => err)));
   }
 
   @Patch(':id')
-   @Roles(Role.EMPRENDEDOR)
-  update(@Param('id') id: string, @Body() body: any) {
-    const { ownerId, updateData } = body;
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.EMPRENDEDOR)
+  update(@Param('id') id: string, @Body() updateData: any, @Request() req: any) {
+    const ownerId = req.user.id
+    if (!ownerId) { throw new UnauthorizedException('Token inválido o usuario no encontrado'); }
     return this.stallsClient.send({ cmd: 'update_stall' }, { id, ownerId, updateData })
       .pipe(catchError(err => throwError(() => err)));
   }
+ 
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.EMPRENDEDOR)
-  remove(@Param('id') id: string, @Body('ownerId') ownerId: string) {
+  remove(@Param('id') id: string, @Request() req: any) {
+    console.log('PARAM ID:', id); console.log('REQ.USER:', req.user);
+    if (!req.user?.id) { throw new UnauthorizedException('Token inválido o usuario no encontrado'); }
+    const ownerId = req.user.id;
     return this.stallsClient.send({ cmd: 'delete_stall' }, { id, ownerId })
       .pipe(catchError(err => throwError(() => err)));
   }
