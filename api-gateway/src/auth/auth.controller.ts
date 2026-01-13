@@ -11,8 +11,12 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { JwtAuthGuard } from './jwt-auth.guard';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { RolesGuard } from './guards/roles.guard';
+import { Roles } from './decorators/roles.decorator';
 import { catchError, firstValueFrom } from 'rxjs';
+import { RegisterDto } from './dto/register.dto';
+import { Role } from '../common/enums/role.enum';
 
 @Controller('auth')
 export class AuthController {
@@ -21,72 +25,58 @@ export class AuthController {
   ) {}
 
   @Post('register')
-  register(@Body() registerDto: any) {
-    return this.authClient.send({ cmd: 'register' }, registerDto);
+  async register(@Body() registerDto: RegisterDto) {
+    return this.authClient.send({ cmd: 'register_user' }, registerDto);
   }
 
   @Post('login')
   async login(@Body() loginDto: any) {
-    // Usamos firstValueFrom para manejar la respuesta como Promesa y capturar errores
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return firstValueFrom(
       this.authClient.send({ cmd: 'login' }, loginDto).pipe(
-        catchError((error) => {
-          console.error('Error detallado de Auth:', error);
+        catchError((err) => {
           throw new HttpException(
-            'Error en el microservicio de Auth',
-            HttpStatus.INTERNAL_SERVER_ERROR,
+            err.message || 'Error en el microservicio de Auth',
+            err.status || HttpStatus.INTERNAL_SERVER_ERROR,
           );
         }),
       ),
     );
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ORGANIZADOR)
+  @Get('users')
+  async findAllUsers() {
+    return this.authClient.send({ cmd: 'find_all_users' }, {}).pipe(
+      catchError((err) => {
+        throw new HttpException(err.message, err.status || HttpStatus.BAD_REQUEST);
+      }),
+    );
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   getProfile(@Req() req: any) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
     const userId = req.user?.id;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    return this.authClient.send({ cmd: 'get_profile' }, { id: userId });
+    if (!userId) {
+      throw new HttpException('Usuario no identificado', HttpStatus.UNAUTHORIZED);
+    }
+    return this.authClient.send({ cmd: 'get_profile' }, { id: userId }).pipe(
+      catchError(err => {
+        throw new HttpException(err.message || 'Error al obtener perfil', HttpStatus.INTERNAL_SERVER_ERROR);
+      }),
+    );
   }
 
   @UseGuards(JwtAuthGuard)
   @Patch('profile')
   updateProfile(@Req() req: any, @Body() updateData: any) {
-    /**
-     * SOLUCIÓN AL ECONNRESET:
-     * Extraemos el ID del token. Si req.user.id es null, el microservicio colapsa.
-     */
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
     const userId = req.user?.id;
-
-    if (!userId) {
-      throw new HttpException(
-        'No se encontró el ID del usuario en el token',
-        HttpStatus.UNAUTHORIZED,
-      );
-    }
-
-    // Enviamos el objeto estructurado
-    return this.authClient
-      .send(
-        { cmd: 'update_profile' },
-        {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          id: userId,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          updateData: updateData,
-        },
-      )
-      .pipe(
-        catchError(() => {
-          // Esto evita que el Gateway lance el error de socket crudo
-          throw new HttpException(
-            'Error de comunicación con Auth-Service',
-            HttpStatus.SERVICE_UNAVAILABLE,
-          );
-        }),
-      );
+    if (!userId) throw new HttpException('Token inválido', HttpStatus.UNAUTHORIZED);
+    return this.authClient.send({ cmd: 'update_profile' }, { id: userId, updateData }).pipe(
+      catchError(err => {
+        throw new HttpException(err.message || 'Error en microservicio', HttpStatus.BAD_REQUEST);
+      })
+    );
   }
 }
