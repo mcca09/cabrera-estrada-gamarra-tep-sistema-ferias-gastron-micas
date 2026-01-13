@@ -15,46 +15,69 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.OrdersController = void 0;
 const common_1 = require("@nestjs/common");
 const microservices_1 = require("@nestjs/microservices");
-const common_2 = require("@nestjs/common");
-const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
+const swagger_1 = require("@nestjs/swagger");
+const create_order_dto_1 = require("./dto/create-order.dto");
+const update_order_status_dto_1 = require("./dto/update-order-status.dto");
 let OrdersController = class OrdersController {
     ordersClient;
     constructor(ordersClient) {
         this.ordersClient = ordersClient;
     }
-    async createOrder(createOrderDto, req) {
-        const orderData = {
-            ...createOrderDto,
-            customer_id: req.user.id
-        };
-        return this.ordersClient.send({ cmd: 'create_order' }, orderData);
+    createOrder(createOrderDto) {
+        console.log('🚀 Gateway validó y recibió:', createOrderDto);
+        return this.ordersClient.send({ cmd: 'create_order' }, createOrderDto);
     }
-    async getMyOrders(req) {
-        const customer_id = req.user.id;
-        return this.ordersClient.send({ cmd: 'get_user_orders' }, { customer_id });
+    getUserOrders(id) {
+        return this.ordersClient.send({ cmd: 'get_user_orders' }, { customer_id: id });
+    }
+    updateStatus(id, updateOrderStatusDto) {
+        console.log(`🔄 Gateway solicitando cambio de estado para orden ${id}:`, updateOrderStatusDto);
+        return this.ordersClient.send({ cmd: 'update_order_status' }, { id, status: updateOrderStatusDto.status });
+    }
+    getStallStats(id) {
+        return this.ordersClient.send({ cmd: 'get_stall_stats' }, { stallId: id });
     }
 };
 exports.OrdersController = OrdersController;
 __decorate([
     (0, common_1.Post)(),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiOperation)({ summary: 'Crear una nueva orden de compra' }),
+    (0, swagger_1.ApiResponse)({ status: 201, description: 'Orden creada exitosamente' }),
     __param(0, (0, common_1.Body)()),
-    __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object]),
-    __metadata("design:returntype", Promise)
+    __metadata("design:paramtypes", [create_order_dto_1.CreateOrderDto]),
+    __metadata("design:returntype", void 0)
 ], OrdersController.prototype, "createOrder", null);
 __decorate([
-    (0, common_1.Get)('my-orders'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    __param(0, (0, common_1.Request)()),
+    (0, common_1.Get)('user/:id'),
+    (0, swagger_1.ApiOperation)({ summary: 'Obtener todas las órdenes de un usuario' }),
+    __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
-], OrdersController.prototype, "getMyOrders", null);
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], OrdersController.prototype, "getUserOrders", null);
+__decorate([
+    (0, common_1.Patch)(':id/status'),
+    (0, swagger_1.ApiOperation)({ summary: 'Actualizar el estado de una orden' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Estado actualizado correctamente' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, update_order_status_dto_1.UpdateOrderStatusDto]),
+    __metadata("design:returntype", void 0)
+], OrdersController.prototype, "updateStatus", null);
+__decorate([
+    (0, common_1.Get)('stats/stall/:id'),
+    (0, swagger_1.ApiOperation)({ summary: 'Obtener el total de ventas de un puesto específico' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], OrdersController.prototype, "getStallStats", null);
 exports.OrdersController = OrdersController = __decorate([
+    (0, swagger_1.ApiTags)('Orders'),
     (0, common_1.Controller)('orders'),
-    __param(0, (0, common_2.Inject)('ORDERS_SERVICE')),
+    __param(0, (0, common_1.Inject)('ORDERS_SERVICE')),
     __metadata("design:paramtypes", [microservices_1.ClientProxy])
 ], OrdersController);
 //# sourceMappingURL=orders.controller.js.map

@@ -1,16 +1,30 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+} from 'typeorm';
 
 @Entity('api_logs')
 export class ApiLog {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({ type: 'bigint' })
   id: number;
 
-  @Column({ nullable: true })
-  userId: string;
+  @Column({ length: 255 })
+  route: string;
 
-  @Column()
-  action: string;
+  @Column({ length: 20 })
+  method: string;
 
-  @CreateDateColumn()
+  @Column({ name: 'user_id', type: 'uuid', nullable: true })
+  userId?: string | null;
+
+  @CreateDateColumn({ name: 'timestamp' })
   timestamp: Date;
+
+  @Column({ name: 'status_code' })
+  statusCode: number;
+
+  @Column({ type: 'text', nullable: true })
+  message: string;
 }

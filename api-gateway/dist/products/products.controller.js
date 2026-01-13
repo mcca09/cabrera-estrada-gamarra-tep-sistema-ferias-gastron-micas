@@ -19,8 +19,9 @@ const operators_1 = require("rxjs/operators");
 const rxjs_1 = require("rxjs");
 const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
 const roles_guard_1 = require("../auth/roles.guard");
-const roles_decorator_1 = require("../auth/roles.decorator");
+const roles_decorator_1 = require("../auth/decorators/roles.decorator");
 const stall_ownership_guard_1 = require("./stall-ownership.guard");
+const role_enum_1 = require("../common/enums/role.enum");
 let ProductsController = class ProductsController {
     productsClient;
     stallsClient;
@@ -85,7 +86,7 @@ __decorate([
 ], ProductsController.prototype, "getPublicCatalog", null);
 __decorate([
     (0, common_1.Post)(),
-    (0, roles_decorator_1.Roles)('emprendedor'),
+    (0, roles_decorator_1.Roles)(role_enum_1.Role.EMPRENDEDOR),
     (0, common_1.UseGuards)(stall_ownership_guard_1.StallOwnershipGuard),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -94,14 +95,14 @@ __decorate([
 ], ProductsController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(),
-    (0, roles_decorator_1.Roles)('emprendedor'),
+    (0, roles_decorator_1.Roles)(role_enum_1.Role.EMPRENDEDOR),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], ProductsController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)(':id'),
-    (0, roles_decorator_1.Roles)('emprendedor'),
+    (0, roles_decorator_1.Roles)(role_enum_1.Role.EMPRENDEDOR),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
@@ -109,7 +110,7 @@ __decorate([
 ], ProductsController.prototype, "findOne", null);
 __decorate([
     (0, common_1.Patch)(':id'),
-    (0, roles_decorator_1.Roles)('emprendedor'),
+    (0, roles_decorator_1.Roles)(role_enum_1.Role.EMPRENDEDOR),
     (0, common_1.UseGuards)(stall_ownership_guard_1.StallOwnershipGuard),
     __param(0, (0, common_1.Param)('id', common_1.ParseUUIDPipe)),
     __param(1, (0, common_1.Body)()),
@@ -119,7 +120,7 @@ __decorate([
 ], ProductsController.prototype, "update", null);
 __decorate([
     (0, common_1.Delete)(':id'),
-    (0, roles_decorator_1.Roles)('emprendedor'),
+    (0, roles_decorator_1.Roles)(role_enum_1.Role.EMPRENDEDOR),
     (0, common_1.UseGuards)(stall_ownership_guard_1.StallOwnershipGuard),
     __param(0, (0, common_1.Param)('id', common_1.ParseUUIDPipe)),
     __metadata("design:type", Function),

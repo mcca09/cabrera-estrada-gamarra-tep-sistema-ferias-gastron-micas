@@ -24,7 +24,7 @@ export class AuthController {
     }
   }
 
-  @MessagePattern({ cmd: 'find_all_users' })
+  /*@MessagePattern({ cmd: 'find_all_users' })
   async findAll() {
     try {
       return await this.authService.findAllUsers();
@@ -42,12 +42,21 @@ export class AuthController {
     } catch (error) {
       throw new RpcException({ message: error.message, status: 404 });
     }
-  }
+  }*/
 
   @MessagePattern({ cmd: 'update_profile' })
   async updateProfile(@Payload() data: any) {
     try {
       return await this.authService.updateProfile(data.id, data.updateData);
+    } catch (error) {
+      throw new RpcException({ message: error.message, status: error.status || 400 });
+    }
+  }
+
+  @MessagePattern({ cmd: 'delete_profile' })
+  async deleteProfile(@Payload() data: any) {
+    try {
+      return await this.authService.deleteProfile(data.id);
     } catch (error) {
       throw new RpcException({ message: error.message, status: error.status || 400 });
     }

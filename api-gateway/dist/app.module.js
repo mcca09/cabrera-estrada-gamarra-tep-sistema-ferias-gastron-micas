@@ -13,6 +13,8 @@ const auth_module_1 = require("./auth/auth.module");
 const products_module_1 = require("./products/products.module");
 const orders_module_1 = require("./orders/orders.module");
 const stalls_module_1 = require("./stalls/stalls.module");
+const core_1 = require("@nestjs/core");
+const logging_interceptor_1 = require("./common/interceptors/logging.interceptor");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -28,7 +30,12 @@ exports.AppModule = AppModule = __decorate([
             stalls_module_1.StallsModule,
         ],
         controllers: [],
-        providers: [],
+        providers: [
+            {
+                provide: core_1.APP_INTERCEPTOR,
+                useClass: logging_interceptor_1.LoggingInterceptor,
+            },
+        ],
     })
 ], AppModule);
 //# sourceMappingURL=app.module.js.map

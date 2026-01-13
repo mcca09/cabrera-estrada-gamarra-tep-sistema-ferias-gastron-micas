@@ -15,38 +15,36 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthController = void 0;
 const common_1 = require("@nestjs/common");
 const microservices_1 = require("@nestjs/microservices");
-const jwt_auth_guard_1 = require("./jwt-auth.guard");
+const jwt_auth_guard_1 = require("./guards/jwt-auth.guard");
 const rxjs_1 = require("rxjs");
+const register_dto_1 = require("./dto/register.dto");
 let AuthController = class AuthController {
     authClient;
     constructor(authClient) {
         this.authClient = authClient;
     }
-    register(registerDto) {
-        return this.authClient.send({ cmd: 'register' }, registerDto);
+    async register(registerDto) {
+        return this.authClient.send({ cmd: 'register_user' }, registerDto);
     }
     async login(loginDto) {
-        return (0, rxjs_1.firstValueFrom)(this.authClient.send({ cmd: 'login' }, loginDto).pipe((0, rxjs_1.catchError)((error) => {
-            console.error('Error detallado de Auth:', error);
-            throw new common_1.HttpException('Error en el microservicio de Auth', common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+        return (0, rxjs_1.firstValueFrom)(this.authClient.send({ cmd: 'login' }, loginDto).pipe((0, rxjs_1.catchError)((err) => {
+            throw new common_1.HttpException(err.message || 'Error en el microservicio de Auth', err.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
         })));
-    }
-    getProfile(req) {
-        const userId = req.user?.id;
-        return this.authClient.send({ cmd: 'get_profile' }, { id: userId });
     }
     updateProfile(req, updateData) {
         const userId = req.user?.id;
-        if (!userId) {
-            throw new common_1.HttpException('No se encontró el ID del usuario en el token', common_1.HttpStatus.UNAUTHORIZED);
-        }
-        return this.authClient
-            .send({ cmd: 'update_profile' }, {
-            id: userId,
-            updateData: updateData,
-        })
-            .pipe((0, rxjs_1.catchError)(() => {
-            throw new common_1.HttpException('Error de comunicación con Auth-Service', common_1.HttpStatus.SERVICE_UNAVAILABLE);
+        if (!userId)
+            throw new common_1.HttpException('Token inválido', common_1.HttpStatus.UNAUTHORIZED);
+        return this.authClient.send({ cmd: 'update_profile' }, { id: userId, updateData }).pipe((0, rxjs_1.catchError)(err => {
+            throw new common_1.HttpException(err.message || 'Error en microservicio', common_1.HttpStatus.BAD_REQUEST);
+        }));
+    }
+    deleteProfile(req, deleteData) {
+        const userId = req.user?.id;
+        if (!userId)
+            throw new common_1.HttpException('Token inválido', common_1.HttpStatus.UNAUTHORIZED);
+        return this.authClient.send({ cmd: 'delete_profile' }, { id: userId }).pipe((0, rxjs_1.catchError)(err => {
+            throw new common_1.HttpException(err.message || 'Error en microservicio', common_1.HttpStatus.BAD_REQUEST);
         }));
     }
 };
@@ -55,8 +53,8 @@ __decorate([
     (0, common_1.Post)('register'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:paramtypes", [register_dto_1.RegisterDto]),
+    __metadata("design:returntype", Promise)
 ], AuthController.prototype, "register", null);
 __decorate([
     (0, common_1.Post)('login'),
@@ -67,14 +65,6 @@ __decorate([
 ], AuthController.prototype, "login", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, common_1.Get)('profile'),
-    __param(0, (0, common_1.Req)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", void 0)
-], AuthController.prototype, "getProfile", null);
-__decorate([
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Patch)('profile'),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Body)()),
@@ -82,6 +72,15 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "updateProfile", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Delete)('profile'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", void 0)
+], AuthController.prototype, "deleteProfile", null);
 exports.AuthController = AuthController = __decorate([
     (0, common_1.Controller)('auth'),
     __param(0, (0, common_1.Inject)('AUTH_SERVICE')),

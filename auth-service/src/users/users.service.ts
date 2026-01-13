@@ -43,4 +43,12 @@ export class UsersService {
     if (!updated) throw new Error('Usuario no encontrado tras actualizar');
     return updated;
   }
+
+  async delete(id: string): Promise<void> {
+  const result = await this.usersRepository.delete(id);
+  if (result.affected === 0) {
+    throw new Error('Usuario no encontrado');
+  }
+}
+
 }

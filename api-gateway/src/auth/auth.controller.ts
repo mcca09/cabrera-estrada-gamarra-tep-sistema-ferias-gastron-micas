@@ -9,6 +9,7 @@ import {
   Patch,
   HttpException,
   HttpStatus,
+  Delete,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -43,7 +44,7 @@ export class AuthController {
     );
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  /*@UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ORGANIZADOR)
   @Get('users')
   async findAllUsers() {
@@ -66,7 +67,7 @@ export class AuthController {
         throw new HttpException(err.message || 'Error al obtener perfil', HttpStatus.INTERNAL_SERVER_ERROR);
       }),
     );
-  }
+  }*/
 
   @UseGuards(JwtAuthGuard)
   @Patch('profile')
@@ -74,6 +75,18 @@ export class AuthController {
     const userId = req.user?.id;
     if (!userId) throw new HttpException('Token inválido', HttpStatus.UNAUTHORIZED);
     return this.authClient.send({ cmd: 'update_profile' }, { id: userId, updateData }).pipe(
+      catchError(err => {
+        throw new HttpException(err.message || 'Error en microservicio', HttpStatus.BAD_REQUEST);
+      })
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('profile')
+  deleteProfile(@Req() req: any, @Body() deleteData: any) {
+    const userId = req.user?.id;
+    if (!userId) throw new HttpException('Token inválido', HttpStatus.UNAUTHORIZED);
+    return this.authClient.send({ cmd: 'delete_profile' }, { id: userId}).pipe(
       catchError(err => {
         throw new HttpException(err.message || 'Error en microservicio', HttpStatus.BAD_REQUEST);
       })
