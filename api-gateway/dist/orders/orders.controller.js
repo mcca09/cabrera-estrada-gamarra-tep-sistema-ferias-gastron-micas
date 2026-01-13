@@ -37,6 +37,15 @@ let OrdersController = class OrdersController {
     getStallStats(id) {
         return this.ordersClient.send({ cmd: 'get_stall_stats' }, { stallId: id });
     }
+    getAllOrders(query) {
+        return this.ordersClient.send({ cmd: 'get_all_orders_admin' }, query);
+    }
+    getBestSeller() {
+        return this.ordersClient.send({ cmd: 'get_best_seller' }, {});
+    }
+    getDailyVolume() {
+        return this.ordersClient.send({ cmd: 'get_daily_volume' }, {});
+    }
 };
 exports.OrdersController = OrdersController;
 __decorate([
@@ -67,13 +76,35 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], OrdersController.prototype, "updateStatus", null);
 __decorate([
-    (0, common_1.Get)('stats/stall/:id'),
+    (0, common_1.Get)('stall/:id/stats'),
     (0, swagger_1.ApiOperation)({ summary: 'Obtener el total de ventas de un puesto específico' }),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], OrdersController.prototype, "getStallStats", null);
+__decorate([
+    (0, common_1.Get)('admin/all'),
+    (0, swagger_1.ApiOperation)({ summary: 'Vista global de pedidos (Filtros: ?date=YYYY-MM-DD&stallId=X&status=Y)' }),
+    __param(0, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], OrdersController.prototype, "getAllOrders", null);
+__decorate([
+    (0, common_1.Get)('admin/best-seller'),
+    (0, swagger_1.ApiOperation)({ summary: 'Obtener el producto más vendido de la feria' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], OrdersController.prototype, "getBestSeller", null);
+__decorate([
+    (0, common_1.Get)('admin/daily-volume'),
+    (0, swagger_1.ApiOperation)({ summary: 'Ver reporte de ventas totales agrupadas por día' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], OrdersController.prototype, "getDailyVolume", null);
 exports.OrdersController = OrdersController = __decorate([
     (0, swagger_1.ApiTags)('Orders'),
     (0, common_1.Controller)('orders'),
