@@ -1,24 +1,24 @@
-import { IsUUID, IsArray, ValidateNested, IsNumber, Min, IsNotEmpty } from 'class-validator';
+import { IsUUID, IsArray, ValidateNested, IsNumber, Min, IsNotEmpty, IsInt } from 'class-validator';
 import { Type } from 'class-transformer';
 
 class OrderItemDto {
-  @IsUUID()
   @IsNotEmpty()
-  product_id: string;
+  @IsUUID()
+  productId: string; 
 
-  @IsNumber()
-  @Min(1)
+  @IsInt({ message: 'La cantidad debe ser un número entero' })
+  @Min(1, { message: 'La cantidad mínima es 1' })
   quantity: number;
 
   @IsNumber()
-  @Min(0)
-  unit_price: number;
+  @Min(0, { message: 'El precio no puede ser negativo' })
+  price: number; 
 }
 
 export class CreateOrderDto {
   @IsUUID()
   @IsNotEmpty()
-  customer_id: string; // El Gateway mapeará req.user.id aquí
+  customer_id: string; 
 
   @IsUUID()
   @IsNotEmpty()
