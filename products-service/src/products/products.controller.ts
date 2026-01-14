@@ -7,13 +7,11 @@ import { CreateProductDto } from './create-product.dto';
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
-  // 👇 NUEVO: Escucha petición de Orders Service
   @MessagePattern({ cmd: 'validate_and_update_stock' })
   async validateStock(@Payload() data: { stall_id: string; items: any[] }) {
     return await this.productsService.validateAndUpdateStock(data.stall_id, data.items);
   }
 
-  // ... (Tus métodos originales create, findAll, etc. SIN CAMBIOS) ...
   @MessagePattern({ cmd: 'create_product' })
   create(@Payload() createProductDto: CreateProductDto) { return this.productsService.create(createProductDto); }
 

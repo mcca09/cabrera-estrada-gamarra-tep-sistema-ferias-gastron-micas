@@ -17,7 +17,6 @@ import { CreateOrderDto } from 'src/orders/dto/create-order.dto';
 
 
 @Controller('products')
-@UseGuards(JwtAuthGuard, RolesGuard)
 export class ProductsController {
   constructor(
     @Inject('PRODUCTS_SERVICE') private readonly productsClient: ClientProxy,
@@ -62,7 +61,7 @@ export class ProductsController {
 
   @Post()
   @Roles(Role.EMPRENDEDOR)
-  @UseGuards(StallOwnershipGuard)
+  @UseGuards(JwtAuthGuard,RolesGuard,StallOwnershipGuard)
   create(@Body() createProductDto: any): Observable<any> {
      const data = {
       ...createProductDto,
@@ -82,7 +81,7 @@ export class ProductsController {
 
   @Get()
   @Roles(Role.EMPRENDEDOR)
-  findAll() {
+  @UseGuards(JwtAuthGuard,RolesGuard)findAll() {
     return this.productsClient.send({ cmd: 'get_all_products' }, {}).pipe(
       catchError(() => {
         throw new HttpException(
@@ -95,7 +94,7 @@ export class ProductsController {
 
   @Get(':id')
   @Roles(Role.EMPRENDEDOR)
-  findOne(@Param('id') id: string) {
+  @UseGuards(JwtAuthGuard,RolesGuard)findOne(@Param('id') id: string) {
     return this.productsClient.send({ cmd: 'get_product_by_id' }, id).pipe(
       catchError(() => {
         throw new HttpException('Producto no encontrado', HttpStatus.NOT_FOUND);
@@ -105,7 +104,7 @@ export class ProductsController {
 
   @Patch(':id')
   @Roles(Role.EMPRENDEDOR)
-  @UseGuards(StallOwnershipGuard)
+  @UseGuards(JwtAuthGuard,RolesGuard,StallOwnershipGuard)
   update(
     @Param('id', ParseUUIDPipe) id: string, 
     @Body() updateProductDto: any
@@ -124,7 +123,7 @@ export class ProductsController {
 
   @Delete(':id')
   @Roles(Role.EMPRENDEDOR)
-  @UseGuards(StallOwnershipGuard)
+@UseGuards(JwtAuthGuard,RolesGuard,StallOwnershipGuard)
   remove(@Param('id', ParseUUIDPipe) id: string): Observable<any> {
     return this.productsClient
       .send({ cmd: 'delete_product' }, id)
@@ -137,4 +136,4 @@ export class ProductsController {
         )
       );
   }
-}
+} 
