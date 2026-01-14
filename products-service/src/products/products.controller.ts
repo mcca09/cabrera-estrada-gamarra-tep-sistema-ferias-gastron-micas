@@ -7,24 +7,24 @@ import { CreateProductDto } from './create-product.dto';
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
-  @MessagePattern({ cmd: 'create_product' })
-  create(@Payload() createProductDto: CreateProductDto) {
-    return this.productsService.create(createProductDto);
+  // 👇 NUEVO: Escucha petición de Orders Service
+  @MessagePattern({ cmd: 'validate_and_update_stock' })
+  async validateStock(@Payload() data: { stall_id: string; items: any[] }) {
+    return await this.productsService.validateAndUpdateStock(data.stall_id, data.items);
   }
+
+  // ... (Tus métodos originales create, findAll, etc. SIN CAMBIOS) ...
+  @MessagePattern({ cmd: 'create_product' })
+  create(@Payload() createProductDto: CreateProductDto) { return this.productsService.create(createProductDto); }
 
   @MessagePattern({ cmd: 'get_all_products' })
-  findAll() {
-    return this.productsService.findAll();
-  }
+  findAll() { return this.productsService.findAll(); }
 
   @MessagePattern({ cmd: 'get_product_by_id' })
-  findOne(@Payload() id: string) {
-    return this.productsService.findOne(id);
-  }
+  findOne(@Payload() id: string) { return this.productsService.findOne(id); }
+
   @MessagePattern({ cmd: 'get_filtered_products' })
-    findAllFiltered(@Payload() filters: any) {
-    return this.productsService.findFiltered(filters);
-  }
+  findAllFiltered(@Payload() filters: any) { return this.productsService.findFiltered(filters); }
 
   @MessagePattern({ cmd: 'update_product' })
   update(@Payload() data: { id: string; [key: string]: any }) {
@@ -33,7 +33,5 @@ export class ProductsController {
   }
 
   @MessagePattern({ cmd: 'delete_product' })
-  remove(@Payload() id: string) {
-    return this.productsService.remove(id); 
-  }
+  remove(@Payload() id: string) { return this.productsService.remove(id); }
 }

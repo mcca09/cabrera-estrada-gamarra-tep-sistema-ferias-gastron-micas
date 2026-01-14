@@ -4,21 +4,17 @@ import { Type } from 'class-transformer';
 class OrderItemDto {
   @IsUUID()
   @IsNotEmpty()
-  product_id: string;
+  productId: string; // CamelCase para coincidir con Gateway
 
   @IsNumber()
   @Min(1)
   quantity: number;
-
-  @IsNumber()
-  @Min(0)
-  unit_price: number;
 }
 
 export class CreateOrderDto {
   @IsUUID()
   @IsNotEmpty()
-  customer_id: string; // El Gateway mapeará req.user.id aquí
+  customer_id: string; 
 
   @IsUUID()
   @IsNotEmpty()
@@ -27,5 +23,5 @@ export class CreateOrderDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => OrderItemDto)
-  items: OrderItemDto[];
+  items: OrderItemDto[]; 
 }
