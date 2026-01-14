@@ -108,8 +108,8 @@ export class StallsService {
     }
   }*/ 
 
-  async validateAccess(userId: string, stallId: string): Promise<boolean> {
-    const stall = await this.stallsRepository.findOne({ where: { id: stallId } });
+  async validateAccess(userId: string, stall_id: string): Promise<boolean> {
+    const stall = await this.findOne(stall_id);
     if (!stall || stall.ownerId !== userId) {
       return false;
     }

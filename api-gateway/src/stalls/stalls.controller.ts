@@ -96,7 +96,6 @@ export class StallsController {
    @Roles(Role.EMPRENDEDOR)
   @UseGuards(JwtAuthGuard, RolesGuard)
   remove(@Param('id') id: string, @Request() req: any) {
-    console.log('PARAM ID:', id); console.log('REQ.USER:', req.user);
     if (!req.user?.id) { throw new UnauthorizedException('Token inválido o usuario no encontrado'); }
     const ownerId = req.user.id;
     return this.stallsClient.send({ cmd: 'delete_stall' }, { id, ownerId })

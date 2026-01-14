@@ -58,3 +58,4 @@ export class StallOwnershipGuard implements CanActivate {
     return true;
   }
 }
+

@@ -6,15 +6,18 @@ import {
 import { ClientProxy } from '@nestjs/microservices';
 import { catchError, map } from 'rxjs/operators';
 import { firstValueFrom, Observable, throwError } from 'rxjs';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
+
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { StallOwnershipGuard } from './stall-ownership.guard';
 import { Role } from 'src/common/enums/role.enum';
 import { CreateOrderDto } from 'src/orders/dto/create-order.dto';
 
 
+
 @Controller('products')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class ProductsController {
   constructor(
     @Inject('PRODUCTS_SERVICE') private readonly productsClient: ClientProxy,
@@ -59,7 +62,7 @@ export class ProductsController {
 
   @Post()
   @Roles(Role.EMPRENDEDOR)
-  @UseGuards(JwtAuthGuard, RolesGuard,StallOwnershipGuard)
+  @UseGuards(StallOwnershipGuard)
   create(@Body() createProductDto: any): Observable<any> {
      const data = {
       ...createProductDto,
@@ -78,7 +81,6 @@ export class ProductsController {
   }
 
   @Get()
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.EMPRENDEDOR)
   findAll() {
     return this.productsClient.send({ cmd: 'get_all_products' }, {}).pipe(
@@ -92,7 +94,6 @@ export class ProductsController {
   }
 
   @Get(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.EMPRENDEDOR)
   findOne(@Param('id') id: string) {
     return this.productsClient.send({ cmd: 'get_product_by_id' }, id).pipe(
@@ -104,7 +105,7 @@ export class ProductsController {
 
   @Patch(':id')
   @Roles(Role.EMPRENDEDOR)
-   @UseGuards(JwtAuthGuard, RolesGuard,StallOwnershipGuard)
+  @UseGuards(StallOwnershipGuard)
   update(
     @Param('id', ParseUUIDPipe) id: string, 
     @Body() updateProductDto: any
@@ -123,7 +124,7 @@ export class ProductsController {
 
   @Delete(':id')
   @Roles(Role.EMPRENDEDOR)
-   @UseGuards(JwtAuthGuard, RolesGuard,StallOwnershipGuard)
+  @UseGuards(StallOwnershipGuard)
   remove(@Param('id', ParseUUIDPipe) id: string): Observable<any> {
     return this.productsClient
       .send({ cmd: 'delete_product' }, id)
