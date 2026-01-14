@@ -5,6 +5,8 @@ export declare class AuthController {
     constructor(authClient: ClientProxy);
     register(registerDto: RegisterDto): Promise<import("rxjs").Observable<any>>;
     login(loginDto: any): Promise<any>;
+    findAllUsers(): Promise<import("rxjs").Observable<any>>;
+    getProfile(req: any): import("rxjs").Observable<any>;
     updateProfile(req: any, updateData: any): import("rxjs").Observable<any>;
     deleteProfile(req: any, deleteData: any): import("rxjs").Observable<any>;
 }

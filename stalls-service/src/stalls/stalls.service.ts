@@ -106,7 +106,7 @@ export class StallsService {
     if (stall.ownerId !== userId) {
       throw new RpcException({ message: 'No eres el dueño de este puesto', status: 401 });
     }
-  }*/ 
+  }*/
 
   async validateAccess(userId: string, stall_id: string): Promise<boolean> {
     const stall = await this.findOne(stall_id);

@@ -61,11 +61,11 @@ export class AuthService {
 
   async deleteProfile(id: string): Promise<{ message: string }> {
   const user = await this.usersService.findById(id);
-  if (!user) throw new NotFoundException('Usuario no encontrado');
+    if (!user) throw new NotFoundException('Usuario no encontrado');
 
-  await this.usersService.delete(id);
+    await this.usersService.delete(id);
 
-  return { message: 'Perfil eliminado correctamente' };
-}
+    return { message: 'Perfil eliminado correctamente' };
+  }
 
 }

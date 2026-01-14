@@ -8,4 +8,7 @@ export declare class OrdersController {
     getUserOrders(id: string): import("rxjs").Observable<any>;
     updateStatus(id: string, updateOrderStatusDto: UpdateOrderStatusDto): import("rxjs").Observable<any>;
     getStallStats(id: string): import("rxjs").Observable<any>;
+    findAllAdmin(): import("rxjs").Observable<any>;
+    findBestSeller(): import("rxjs").Observable<any>;
+    findDailyVolume(): import("rxjs").Observable<any>;
 }

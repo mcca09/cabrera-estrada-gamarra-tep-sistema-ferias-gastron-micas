@@ -24,7 +24,7 @@ export class AuthController {
     }
   }
 
-  /*@MessagePattern({ cmd: 'find_all_users' })
+  @MessagePattern({ cmd: 'find_all_users' })
   async findAll() {
     try {
       return await this.authService.findAllUsers();
@@ -42,7 +42,7 @@ export class AuthController {
     } catch (error) {
       throw new RpcException({ message: error.message, status: 404 });
     }
-  }*/
+  }
 
   @MessagePattern({ cmd: 'update_profile' })
   async updateProfile(@Payload() data: any) {

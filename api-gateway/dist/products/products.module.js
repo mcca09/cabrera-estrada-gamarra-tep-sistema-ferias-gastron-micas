@@ -11,12 +11,16 @@ const common_1 = require("@nestjs/common");
 const microservices_1 = require("@nestjs/microservices");
 const products_controller_1 = require("./products.controller");
 const config_1 = require("@nestjs/config");
+const jwt_strategy_1 = require("../auth/strategies/jwt.strategy");
+const passport_1 = require("@nestjs/passport");
 let ProductsModule = class ProductsModule {
 };
 exports.ProductsModule = ProductsModule;
 exports.ProductsModule = ProductsModule = __decorate([
     (0, common_1.Module)({
         imports: [
+            config_1.ConfigModule,
+            passport_1.PassportModule.register({ defaultStrategy: 'jwt' }),
             microservices_1.ClientsModule.registerAsync([
                 {
                     name: 'PRODUCTS_SERVICE',
@@ -45,6 +49,7 @@ exports.ProductsModule = ProductsModule = __decorate([
             ]),
         ],
         controllers: [products_controller_1.ProductsController],
+        providers: [jwt_strategy_1.JwtStrategy],
     })
 ], ProductsModule);
 //# sourceMappingURL=products.module.js.map

@@ -16,8 +16,11 @@ exports.AuthController = void 0;
 const common_1 = require("@nestjs/common");
 const microservices_1 = require("@nestjs/microservices");
 const jwt_auth_guard_1 = require("./guards/jwt-auth.guard");
+const roles_guard_1 = require("./guards/roles.guard");
+const roles_decorator_1 = require("./decorators/roles.decorator");
 const rxjs_1 = require("rxjs");
 const register_dto_1 = require("./dto/register.dto");
+const role_enum_1 = require("../common/enums/role.enum");
 let AuthController = class AuthController {
     authClient;
     constructor(authClient) {
@@ -30,6 +33,20 @@ let AuthController = class AuthController {
         return (0, rxjs_1.firstValueFrom)(this.authClient.send({ cmd: 'login' }, loginDto).pipe((0, rxjs_1.catchError)((err) => {
             throw new common_1.HttpException(err.message || 'Error en el microservicio de Auth', err.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
         })));
+    }
+    async findAllUsers() {
+        return this.authClient.send({ cmd: 'find_all_users' }, {}).pipe((0, rxjs_1.catchError)((err) => {
+            throw new common_1.HttpException(err.message, err.status || common_1.HttpStatus.BAD_REQUEST);
+        }));
+    }
+    getProfile(req) {
+        const userId = req.user?.id;
+        if (!userId) {
+            throw new common_1.HttpException('Usuario no identificado', common_1.HttpStatus.UNAUTHORIZED);
+        }
+        return this.authClient.send({ cmd: 'get_profile' }, { id: userId }).pipe((0, rxjs_1.catchError)(err => {
+            throw new common_1.HttpException(err.message || 'Error al obtener perfil', common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+        }));
     }
     updateProfile(req, updateData) {
         const userId = req.user?.id;
@@ -63,6 +80,22 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "login", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(role_enum_1.Role.ORGANIZADOR),
+    (0, common_1.Get)('users'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "findAllUsers", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Get)('profile'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], AuthController.prototype, "getProfile", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Patch)('profile'),

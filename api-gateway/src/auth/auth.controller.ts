@@ -44,7 +44,7 @@ export class AuthController {
     );
   }
 
-  /*@UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ORGANIZADOR)
   @Get('users')
   async findAllUsers() {
@@ -67,7 +67,7 @@ export class AuthController {
         throw new HttpException(err.message || 'Error al obtener perfil', HttpStatus.INTERNAL_SERVER_ERROR);
       }),
     );
-  }*/
+  }
 
   @UseGuards(JwtAuthGuard)
   @Patch('profile')

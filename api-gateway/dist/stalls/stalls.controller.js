@@ -15,10 +15,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.StallsController = void 0;
 const common_1 = require("@nestjs/common");
 const microservices_1 = require("@nestjs/microservices");
-const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
-const roles_guard_1 = require("../auth/roles.guard");
-const roles_decorator_1 = require("../auth/decorators/roles.decorator");
 const rxjs_1 = require("rxjs");
+const rpc_exception_filter_1 = require("../common/rpc-exception.filter");
+const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
+const roles_guard_1 = require("../auth/guards/roles.guard");
+const roles_decorator_1 = require("../auth/decorators/roles.decorator");
 const role_enum_1 = require("../common/enums/role.enum");
 let StallsController = class StallsController {
     stallsClient;
@@ -26,74 +27,57 @@ let StallsController = class StallsController {
         this.stallsClient = stallsClient;
     }
     create(createStallDto, req) {
-        const userId = req.user.id;
-        const data = {
+        const payload = {
             ...createStallDto,
-            ownerId: userId,
-            status: 'pendiente'
+            ownerId: req.user.id,
         };
-        return this.stallsClient.send({ cmd: 'create_stall' }, data);
+        return this.stallsClient.send({ cmd: 'create_stall' }, payload);
     }
     findAll() {
-        return this.stallsClient.send({ cmd: 'get_all_stalls' }, {});
-    }
-    findOne(id) {
-        return this.stallsClient.send({ cmd: 'find_one_stall' }, id);
-    }
-    findAllActive() {
-        return this.stallsClient.send({ cmd: 'get_active_stalls' }, {});
+        return this.stallsClient.send({ cmd: 'find_all_stalls' }, {});
     }
     approve(id) {
-        return this.stallsClient.send({ cmd: 'approve_stall' }, { id })
-            .pipe((0, rxjs_1.catchError)(err => (0, rxjs_1.throwError)(() => err)));
-    }
-    disapprove(id) {
-        return this.stallsClient.send({ cmd: 'disapprove_stall' }, { id })
-            .pipe((0, rxjs_1.catchError)(err => (0, rxjs_1.throwError)(() => err)));
+        return this.stallsClient
+            .send({ cmd: 'approve_stall' }, { id })
+            .pipe((0, rxjs_1.catchError)((err) => (0, rxjs_1.throwError)(() => err)));
     }
     activate(id, req) {
-        const ownerId = req.user.id;
-        return this.stallsClient.send({ cmd: 'activate_stall' }, { id, ownerId })
-            .pipe((0, rxjs_1.catchError)(err => (0, rxjs_1.throwError)(() => err)));
+        return this.stallsClient
+            .send({ cmd: 'activate_stall' }, { id, ownerId: req.user.id })
+            .pipe((0, rxjs_1.catchError)((err) => (0, rxjs_1.throwError)(() => err)));
     }
     inactivate(id, req) {
-        const ownerId = req.user.id;
-        return this.stallsClient.send({ cmd: 'inactivate_stall' }, { id, ownerId })
-            .pipe((0, rxjs_1.catchError)(err => (0, rxjs_1.throwError)(() => err)));
+        return this.stallsClient
+            .send({ cmd: 'inactivate_stall' }, { id, ownerId: req.user.id })
+            .pipe((0, rxjs_1.catchError)((err) => (0, rxjs_1.throwError)(() => err)));
     }
     update(id, updateData, req) {
-        const ownerId = req.user.id;
-        if (!ownerId) {
-            throw new common_1.UnauthorizedException('Token inválido o usuario no encontrado');
-        }
-        return this.stallsClient.send({ cmd: 'update_stall' }, { id, ownerId, updateData })
-            .pipe((0, rxjs_1.catchError)(err => (0, rxjs_1.throwError)(() => err)));
+        return this.stallsClient
+            .send({ cmd: 'update_stall' }, {
+            id,
+            ownerId: req.user.id,
+            updateData,
+        })
+            .pipe((0, rxjs_1.catchError)((err) => (0, rxjs_1.throwError)(() => err)));
     }
     remove(id, req) {
-        console.log('PARAM ID:', id);
-        console.log('REQ.USER:', req.user);
-        if (!req.user?.id) {
-            throw new common_1.UnauthorizedException('Token inválido o usuario no encontrado');
-        }
-        const ownerId = req.user.id;
-        return this.stallsClient.send({ cmd: 'delete_stall' }, { id, ownerId })
-            .pipe((0, rxjs_1.catchError)(err => (0, rxjs_1.throwError)(() => err)));
+        return this.stallsClient
+            .send({ cmd: 'delete_stall' }, { id, ownerId: req.user.id })
+            .pipe((0, rxjs_1.catchError)((err) => (0, rxjs_1.throwError)(() => err)));
     }
 };
 exports.StallsController = StallsController;
 __decorate([
-    (0, common_1.Post)(),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(role_enum_1.Role.EMPRENDEDOR),
+    (0, common_1.Post)(),
     __param(0, (0, common_1.Body)()),
-    __param(1, (0, common_1.Request)()),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", void 0)
 ], StallsController.prototype, "create", null);
 __decorate([
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)(role_enum_1.Role.EMPRENDEDOR),
     (0, common_1.Get)(),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
@@ -101,80 +85,57 @@ __decorate([
 ], StallsController.prototype, "findAll", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)(role_enum_1.Role.EMPRENDEDOR),
-    (0, common_1.Get)(':id'),
-    __param(0, (0, common_1.Param)('id')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", void 0)
-], StallsController.prototype, "findOne", null);
-__decorate([
-    (0, common_1.Get)('public'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], StallsController.prototype, "findAllActive", null);
-__decorate([
-    (0, common_1.Patch)(':id/approve'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(role_enum_1.Role.ORGANIZADOR),
+    (0, common_1.Patch)(':id/approve'),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], StallsController.prototype, "approve", null);
 __decorate([
-    (0, common_1.Patch)(':id/disapprove'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)(role_enum_1.Role.ORGANIZADOR),
-    __param(0, (0, common_1.Param)('id')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", void 0)
-], StallsController.prototype, "disapprove", null);
-__decorate([
-    (0, common_1.Patch)(':id/activate'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(role_enum_1.Role.EMPRENDEDOR),
+    (0, common_1.Patch)(':id/activate'),
     __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Request)()),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], StallsController.prototype, "activate", null);
 __decorate([
-    (0, common_1.Patch)(':id/inactivate'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(role_enum_1.Role.EMPRENDEDOR),
+    (0, common_1.Patch)(':id/inactivate'),
     __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Request)()),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], StallsController.prototype, "inactivate", null);
 __decorate([
-    (0, common_1.Patch)(':id'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(role_enum_1.Role.EMPRENDEDOR),
+    (0, common_1.Put)(':id'),
     __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)()),
-    __param(2, (0, common_1.Request)()),
+    __param(1, (0, common_1.Body)('updateData')),
+    __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Object, Object]),
     __metadata("design:returntype", void 0)
 ], StallsController.prototype, "update", null);
 __decorate([
-    (0, common_1.Delete)(':id'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(role_enum_1.Role.EMPRENDEDOR),
+    (0, common_1.Delete)(':id'),
     __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Request)()),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], StallsController.prototype, "remove", null);
 exports.StallsController = StallsController = __decorate([
     (0, common_1.Controller)('stalls'),
+    (0, common_1.UseFilters)(rpc_exception_filter_1.AllExceptionsFilter),
     __param(0, (0, common_1.Inject)('STALLS_SERVICE')),
     __metadata("design:paramtypes", [microservices_1.ClientProxy])
 ], StallsController);
