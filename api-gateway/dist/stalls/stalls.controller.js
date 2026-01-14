@@ -33,12 +33,14 @@ let StallsController = class StallsController {
         };
         return this.stallsClient.send({ cmd: 'create_stall' }, payload);
     }
-    findAll() {
-        return this.stallsClient.send({ cmd: 'find_all_stalls' }, {});
-    }
     approve(id) {
         return this.stallsClient
             .send({ cmd: 'approve_stall' }, { id })
+            .pipe((0, rxjs_1.catchError)((err) => (0, rxjs_1.throwError)(() => err)));
+    }
+    disapprove(id) {
+        return this.stallsClient
+            .send({ cmd: 'disapprove_stall' }, { id })
             .pipe((0, rxjs_1.catchError)((err) => (0, rxjs_1.throwError)(() => err)));
     }
     activate(id, req) {
@@ -51,19 +53,28 @@ let StallsController = class StallsController {
             .send({ cmd: 'inactivate_stall' }, { id, ownerId: req.user.id })
             .pipe((0, rxjs_1.catchError)((err) => (0, rxjs_1.throwError)(() => err)));
     }
-    update(id, updateData, req) {
+    update(id, body, req) {
+        const updateData = body.updateData ? body.updateData : body;
         return this.stallsClient
-            .send({ cmd: 'update_stall' }, {
-            id,
-            ownerId: req.user.id,
-            updateData,
-        })
+            .send({ cmd: 'update_stall' }, { id, ownerId: req.user.id, updateData })
             .pipe((0, rxjs_1.catchError)((err) => (0, rxjs_1.throwError)(() => err)));
     }
     remove(id, req) {
         return this.stallsClient
             .send({ cmd: 'delete_stall' }, { id, ownerId: req.user.id })
             .pipe((0, rxjs_1.catchError)((err) => (0, rxjs_1.throwError)(() => err)));
+    }
+    findActive() {
+        return this.stallsClient.send({ cmd: 'get_active_stalls' }, {});
+    }
+    findAll(req) {
+        if (req.user.role === 'emprendedor') {
+            return this.stallsClient.send({ cmd: 'get_stalls_by_owner' }, { ownerId: req.user.id });
+        }
+        throw new common_1.UnauthorizedException('Solo emprendedores pueden ver su lista personal');
+    }
+    findOne(id, req) {
+        return this.stallsClient.send({ cmd: 'find_one_stall_owner' }, { id, ownerId: req.user.id });
     }
 };
 exports.StallsController = StallsController;
@@ -78,12 +89,6 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], StallsController.prototype, "create", null);
 __decorate([
-    (0, common_1.Get)(),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], StallsController.prototype, "findAll", null);
-__decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(role_enum_1.Role.ORGANIZADOR),
     (0, common_1.Patch)(':id/approve'),
@@ -92,6 +97,15 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], StallsController.prototype, "approve", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(role_enum_1.Role.ORGANIZADOR),
+    (0, common_1.Patch)(':id/disapprove'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], StallsController.prototype, "disapprove", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(role_enum_1.Role.EMPRENDEDOR),
@@ -117,7 +131,7 @@ __decorate([
     (0, roles_decorator_1.Roles)(role_enum_1.Role.EMPRENDEDOR),
     (0, common_1.Put)(':id'),
     __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)('updateData')),
+    __param(1, (0, common_1.Body)()),
     __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Object, Object]),
@@ -133,6 +147,29 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], StallsController.prototype, "remove", null);
+__decorate([
+    (0, common_1.Get)('active'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], StallsController.prototype, "findActive", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Get)(),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], StallsController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Get)(':id'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], StallsController.prototype, "findOne", null);
 exports.StallsController = StallsController = __decorate([
     (0, common_1.Controller)('stalls'),
     (0, common_1.UseFilters)(rpc_exception_filter_1.AllExceptionsFilter),

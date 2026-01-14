@@ -21,24 +21,24 @@ async create(@Payload() dto: CreateStallDto) {
   }
 
   @MessagePattern({ cmd: 'get_active_stalls' })
-   async findActive() {
-    return this.stallsService.findActive(); 
+  async findActive() {
+    return await this.stallsService.findActive();
   }
 
-  @MessagePattern({ cmd: 'get_all_stalls' })
-  async findAll() {
-    return await this.stallsService.findAll();
+  @MessagePattern({ cmd: 'get_stalls_by_owner' })
+  async findByOwner(@Payload() data: { ownerId: string }) {
+    return await this.stallsService.findByOwner(data.ownerId);
   }
 
-  @MessagePattern({ cmd: 'find_one_stall' })
-  async findOne(@Payload() payload: { id: string }) {
-    return await this.stallsService.findOne(payload.id);
+  @MessagePattern({ cmd: 'find_one_stall_owner' })
+  async findOneByOwner(@Payload() data: { id: string, ownerId: string }) {
+    return await this.stallsService.findOneByOwner(data.id, data.ownerId);
   }
-
   
   @MessagePattern({ cmd: 'update_stall' })
   async update(@Payload() payload: any) {
-    const { id, ownerId, updateData } = payload;
+    const { id, ownerId, updateData } = payload; 
+    
     return await this.stallsService.update(id, ownerId, updateData);
   }
 

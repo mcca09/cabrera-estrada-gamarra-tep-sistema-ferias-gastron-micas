@@ -11,6 +11,7 @@ import {
   UseFilters,
   UseGuards,
   Req,
+  UnauthorizedException
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { catchError, throwError } from 'rxjs';
@@ -38,17 +39,21 @@ export class StallsController {
     return this.stallsClient.send({ cmd: 'create_stall' }, payload);
   }
 
-  @Get()
-  findAll() {
-    return this.stallsClient.send({ cmd: 'find_all_stalls' }, {});
-  }
-
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ORGANIZADOR)
   @Patch(':id/approve')
   approve(@Param('id') id: string) {
     return this.stallsClient
       .send({ cmd: 'approve_stall' }, { id })
+      .pipe(catchError((err) => throwError(() => err)));
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ORGANIZADOR) 
+  @Patch(':id/disapprove')
+  disapprove(@Param('id') id: string) {
+    return this.stallsClient
+      .send({ cmd: 'disapprove_stall' }, { id })
       .pipe(catchError((err) => throwError(() => err)));
   }
 
@@ -73,15 +78,13 @@ export class StallsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.EMPRENDEDOR)
   @Put(':id')
-  update(@Param('id') id: string, @Body('updateData') updateData: any, @Req() req: any) {
+  update(@Param('id') id: string, @Body() body: any, @Req() req: any) {
+    const updateData = body.updateData ? body.updateData : body;
+
     return this.stallsClient
       .send(
         { cmd: 'update_stall' },
-        {
-          id,
-          ownerId: req.user.id,
-          updateData,
-        },
+        { id, ownerId: req.user.id, updateData } 
       )
       .pipe(catchError((err) => throwError(() => err)));
   }
@@ -93,5 +96,33 @@ export class StallsController {
     return this.stallsClient
       .send({ cmd: 'delete_stall' }, { id, ownerId: req.user.id })
       .pipe(catchError((err) => throwError(() => err)));
+  }
+
+  // CASO 1: Público - Sin Token
+  @Get('active')
+  findActive() {
+    return this.stallsClient.send({ cmd: 'get_active_stalls' }, {});
+  }
+
+  // CASO 2: Emprendedor - Sus propios puestos
+  @UseGuards(JwtAuthGuard)
+  @Get()
+  findAll(@Req() req: any) {
+    // Solo los dueños ven esta lista completa
+    if (req.user.role === 'emprendedor') {
+      return this.stallsClient.send({ cmd: 'get_stalls_by_owner' }, { ownerId: req.user.id });
+    }
+    // Si un Admin o alguien más entra aquí, por seguridad podrías devolver vacío o error
+    throw new UnauthorizedException('Solo emprendedores pueden ver su lista personal');
+  }
+
+  // CASO 3: Detalle específico - Solo el dueño
+  @UseGuards(JwtAuthGuard)
+  @Get(':id')
+  findOne(@Param('id') id: string, @Req() req: any) {
+    return this.stallsClient.send(
+      { cmd: 'find_one_stall_owner' }, 
+      { id, ownerId: req.user.id }
+    );
   }
 }

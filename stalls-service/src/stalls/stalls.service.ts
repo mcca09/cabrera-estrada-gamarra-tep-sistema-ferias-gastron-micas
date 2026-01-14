@@ -25,12 +25,7 @@ export class StallsService {
     }
   }
 
-
-  async findAll() {
-    return await this.stallsRepository.find();
-  }
-
-  async findOne(id: string) {
+  async findOne(id: string): Promise<Stall> {
     const stall = await this.stallsRepository.findOne({ where: { id } });
     if (!stall) {
       throw new RpcException({ status: 404, message: 'Puesto no encontrado' });
@@ -38,15 +33,44 @@ export class StallsService {
     return stall;
   }
 
-  async findActive(){
-    return await this.stallsRepository.find({ where: [{status: 'activo'}]});
+    // Para el Caso 1
+  async findActive(): Promise<Stall[]> {
+    return await this.stallsRepository.find({
+      where: { status: 'activo' }
+    });
+  }
+
+  // Para el Caso 2
+  async findByOwner(ownerId: string): Promise<Stall[]> {
+    return await this.stallsRepository.find({
+      where: { ownerId }
+    });
+  }
+
+  // Para el Caso 3
+  async findOneByOwner(id: string, ownerId: string): Promise<Stall> {
+    const stall = await this.stallsRepository.findOne({ 
+      where: { id, ownerId } 
+    });
+    
+    if (!stall) {
+      throw new RpcException({ 
+        message: 'Puesto no encontrado o no tienes permiso para verlo', 
+        status: 404 
+      });
+    }
+    return stall;
   }
 
   async update(id: string, ownerId: string, updateData: UpdateStallDto): Promise<Stall> {
     const stall = await this.findOne(id);
-    
+
     if (stall.ownerId !== ownerId) {
       throw new RpcException({ message: 'No eres el dueño de este puesto', status: 401 });
+    }
+
+    if (!updateData) {
+      throw new RpcException({ message: 'No se enviaron datos para actualizar', status: 400 });
     }
 
     if (updateData.name) stall.name = updateData.name;
@@ -91,10 +115,7 @@ export class StallsService {
   async inactivate(id: string, ownerId: string): Promise<Stall> {
     const stall = await this.findOne(id);
     if (stall.ownerId !== ownerId) {
-      throw new RpcException({ message: 'Solo el dueño puede activar el puesto', status: 401 });
-    }
-    if (stall.status === 'pendiente') {
-      throw new RpcException({ message: 'El puesto debe estar aprobado por un organizador', status: 400 });
+      throw new RpcException({ message: 'Solo el dueño puede inactivar el puesto', status: 401 });
     }
     stall.status = 'aprobado';
     return await this.stallsRepository.save(stall);
