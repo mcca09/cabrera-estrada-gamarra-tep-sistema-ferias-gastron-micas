@@ -39,11 +39,28 @@ export class OrdersController {
     );
   }
 
-  // 👇👇👇 AQUÍ ESTÁ LO NUEVO QUE FALTABA 👇👇👇
-  @Get('stats/stall/:id')
-  @ApiOperation({ summary: 'Obtener el total de ventas de un puesto específico' })
-  getStallStats(@Param('id') id: string) {
-    // Le pasamos la petición al microservicio
-    return this.ordersClient.send({ cmd: 'get_stall_stats' }, { stallId: id });
+  @Get('stall/:id/stats') // Esto crea la ruta /api/orders/stall/123/stats
+getStallStats(@Param('id') id: string) {
+  return this.ordersClient.send({ cmd: 'get_stall_stats' }, { stallId: id });
+}
+
+  // 👇👇👇 LO NUEVO DEL ADMIN (Feature 5) 👇👇👇
+
+  @Get('admin/all')
+  @ApiOperation({ summary: 'Obtener todas las órdenes (Admin)' })
+  findAllAdmin() {
+    return this.ordersClient.send({ cmd: 'get_all_orders_admin' }, {});
+  }
+
+  @Get('admin/best-seller')
+  @ApiOperation({ summary: 'Obtener el producto más vendido (Admin)' })
+  findBestSeller() {
+    return this.ordersClient.send({ cmd: 'get_best_seller' }, {});
+  }
+
+  @Get('admin/daily-volume')
+  @ApiOperation({ summary: 'Obtener volumen de ventas diario (Admin)' })
+  findDailyVolume() {
+    return this.ordersClient.send({ cmd: 'get_daily_volume' }, {});
   }
 }
