@@ -18,17 +18,33 @@ export class OrdersController {
     return await this.ordersService.findAllByUser(data.customer_id);
   }
 
-  // 👇 ESTO ES LO QUE FALTABA 👇
   @MessagePattern({ cmd: 'update_order_status' })
   async updateStatus(@Payload() data: { id: string; status: string }) {
     console.log('🔄 Actualizando estado:', data);
     return await this.ordersService.updateStatus(data.id, data.status);
   }
 
-  // Agregamos de una vez el de estadísticas para el futuro
   @MessagePattern({ cmd: 'get_stall_stats' })
   getStats(@Payload() data: { stallId: string }) {
     return this.ordersService.getStallStats(data.stallId);
   }
+  
+  // 1. Ver todas las órdenes (Admin)
+  @MessagePattern({ cmd: 'get_all_orders_admin' })
+  async findAllAdmin() {
+    console.log('📊 Admin solicitando todas las órdenes');
+    return await this.ordersService.findAll(); 
+  }
 
+  // 2. Producto más vendido
+  @MessagePattern({ cmd: 'get_best_seller' })
+  async getBestSeller() {
+    return await this.ordersService.findBestSeller();
+  }
+
+  // 3. Volumen diario de ventas
+  @MessagePattern({ cmd: 'get_daily_volume' })
+  async getDailyVolume() {
+    return await this.ordersService.findDailyVolume();
+  }
 }
