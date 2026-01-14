@@ -36,10 +36,4 @@ export class ProductsController {
   remove(@Payload() id: string) {
     return this.productsService.remove(id); 
   }
-
-  @MessagePattern({ cmd: 'validate_and_update_stock' })
-  validateStock(@Payload() data: { stall_id: string; items: any[] }) {
-    return this.productsService.validateAndUpdateStock(data.stall_id, data.items);
-  }
-
 }

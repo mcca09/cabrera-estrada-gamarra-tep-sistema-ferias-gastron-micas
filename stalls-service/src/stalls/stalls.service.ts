@@ -100,11 +100,19 @@ export class StallsService {
     return await this.stallsRepository.save(stall);
   }
 
-  async validateAccess(userId: string, stallId: string): Promise<{ valid: boolean }> {
+  //Este es el del commit antes de las 12.
+  /*async validateAccess(userId: string, stall_id: string): Promise<void> {
+    const stall = await this.findOne(stall_id);
+    if (stall.ownerId !== userId) {
+      throw new RpcException({ message: 'No eres el dueño de este puesto', status: 401 });
+    }
+  }*/ 
+
+  async validateAccess(userId: string, stallId: string): Promise<boolean> {
     const stall = await this.stallsRepository.findOne({ where: { id: stallId } });
     if (!stall || stall.ownerId !== userId) {
-    return { valid: false }; 
+      return false;
+    }
+    return true;
   }
-    return { valid: true }; 
-  }
-}  
+}

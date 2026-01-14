@@ -4,21 +4,16 @@ import { OrdersController } from './orders.controller';
 import { OrdersService } from './orders.service';
 import { Order } from './order.entity';
 import { OrderItem } from './order-item.entity';
-import { ClientsModule, Transport } from '@nestjs/microservices';
 
 @Module({
   imports: [
+    // 1. IMPORTANTE: Registramos las Entidades aquí para que el Servicio
+    // pueda usar @InjectRepository(Order) sin romperse.
     TypeOrmModule.forFeature([Order, OrderItem]), 
-    ClientsModule.register([
-      {
-        name: 'PRODUCTS_SERVICE',
-        transport: Transport.TCP,
-        options: { host: '127.0.0.1', port: 3003 }, 
-      },
-    ]),
   ],
   controllers: [OrdersController],
   providers: [
+    // 2. IMPORTANTE: Aquí registramos el servicio. 
     OrdersService, 
   ],
 })

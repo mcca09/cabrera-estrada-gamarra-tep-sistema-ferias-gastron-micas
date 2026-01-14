@@ -49,6 +49,7 @@ export class StallOwnershipGuard implements CanActivate {
       ),
     );
 
+    // Ajuste crítico: Validamos el campo .valid del objeto de respuesta
     if (!ownershipResponse || !ownershipResponse.valid) {
       throw new ForbiddenException(
         ownershipResponse?.message || 'No tienes permiso sobre este puesto.',

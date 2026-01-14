@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, DataSource, In, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
+import { Between, In, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
 import { Product } from './products.entity';
 import { CreateProductDto } from './create-product.dto';
 import { UpdateProductDto } from './update-product.dto';
@@ -10,7 +10,6 @@ export class ProductsService {
   constructor(
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
-    private dataSource: DataSource,
   ) {}
 
   async create(createProductDto: CreateProductDto): Promise<Product> {
@@ -74,52 +73,4 @@ async remove(id: string): Promise<boolean> {
   if (result.affected === undefined) return false;
   return true;
 }
-
-  async validateAndUpdateStock(stallId: string, items: any[]) {
-    console.log('--- INICIANDO TRANSACCIÓN DE STOCK ---');
-    console.log('Stall ID recibido:', stallId);
-    console.log('Items recibidos:', items);
-
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-      for (const item of items) {
-        const productId = item.productId || item.product_id; 
-
-        const product = await queryRunner.manager.findOne(Product, { 
-            where: { id: productId } 
-        });
-
-        if (!product) {
-          throw new Error(`Producto ID ${productId} no encontrado en BD`);
-        }
-
-        if (product.stall_id !== stallId) {
-          throw new Error(`El producto ${product.name} es del puesto ${product.stall_id}, pero la orden es para ${stallId}`);
-        }
-
-        if (product.stock < item.quantity) {
-          throw new Error(`Stock insuficiente para ${product.name}. Pedido: ${item.quantity}, Disponible: ${product.stock}`);
-        }
-
-        product.stock -= item.quantity;
-        if (product.stock === 0) product.is_available = false;
-        
-        await queryRunner.manager.save(product);
-      }
-
-      await queryRunner.commitTransaction();
-      console.log('--- TRANSACCIÓN EXITOSA ---');
-      return { success: true };
-
-    } catch (error) {
-      console.error('--- ERROR EN TRANSACCIÓN ---', error.message);
-      await queryRunner.rollbackTransaction();
-      return { success: false, message: error.message };
-    } finally {
-      await queryRunner.release();
-    }
-  }
 }
