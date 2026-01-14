@@ -26,4 +26,5 @@ export class OrdersController {
   getStats(@Payload() data: { stallId: string }) {
     return this.ordersService.getStallStats(data.stallId);
   }
+
 }
